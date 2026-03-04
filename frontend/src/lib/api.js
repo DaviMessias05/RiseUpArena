@@ -223,7 +223,7 @@ export function getPlatformStats() {
 // ── Verify reCAPTCHA ──────────────────────────────────────────────────────────
 
 export function verifyCaptcha(token, action) {
-  return apiPost('/auth/verify-captcha', { token, action })
+  return apiPost('/auth/captcha-verify', { token, action })
 }
 
 export function completeProfile(data) {
