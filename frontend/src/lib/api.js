@@ -28,9 +28,27 @@ async function handleResponse(response) {
   return response.json()
 }
 
+async function fetchWithRetry(url, options, retries = 1) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), attempt === 0 ? 15000 : 30000)
+      const response = await fetch(url, { ...options, signal: controller.signal })
+      clearTimeout(timeout)
+      return response
+    } catch (err) {
+      if (attempt < retries) continue
+      if (err.name === 'AbortError') {
+        throw new Error('O servidor está iniciando, tente novamente em alguns segundos.')
+      }
+      throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.')
+    }
+  }
+}
+
 export async function apiGet(path) {
   const headers = await getAuthHeaders()
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'GET',
     headers,
   })
@@ -39,7 +57,7 @@ export async function apiGet(path) {
 
 export async function apiPost(path, body) {
   const headers = await getAuthHeaders()
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
@@ -49,7 +67,7 @@ export async function apiPost(path, body) {
 
 export async function apiPut(path, body) {
   const headers = await getAuthHeaders()
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'PUT',
     headers,
     body: JSON.stringify(body),
@@ -59,7 +77,7 @@ export async function apiPut(path, body) {
 
 export async function apiDelete(path) {
   const headers = await getAuthHeaders()
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'DELETE',
     headers,
   })
