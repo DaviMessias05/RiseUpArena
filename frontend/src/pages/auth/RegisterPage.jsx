@@ -106,46 +106,21 @@ export default function RegisterPage() {
     try {
       const cpfDigits = cpf.replace(/\D/g, '');
 
-      // Tenta validar via backend (CPF + unicidade + captcha)
-      // Se backend não estiver disponível, faz validação local
-      let backendAvailable = true;
-      try {
-        const cpfResult = await api.apiPost('/auth/validate-cpf', { cpf: cpfDigits });
-        if (!cpfResult.valid) {
-          setError(cpfResult.error || 'CPF inválido.');
-          setLoading(false);
-          return;
-        }
-      } catch (cpfErr) {
-        if (cpfErr.status === 409 || cpfErr.status === 400) {
-          setError(cpfErr.message || 'CPF inválido ou já cadastrado.');
-          setLoading(false);
-          return;
-        }
-        // Backend offline — continua com validação local
-        backendAvailable = false;
+      // Validar CPF via backend (estrutural + verificação real)
+      const cpfResult = await api.apiPost('/auth/validate-cpf', { cpf: cpfDigits });
+      if (!cpfResult.valid) {
+        setError(cpfResult.error || 'CPF inválido.');
+        setLoading(false);
+        return;
       }
 
-      if (backendAvailable) {
-        try {
-          await api.apiPost('/auth/check-unique', { email, username, cpf: cpfDigits });
-        } catch (uniqueErr) {
-          if (uniqueErr.status === 409) {
-            const errors = uniqueErr.body?.errors;
-            setError(errors?.email || errors?.username || errors?.cpf || uniqueErr.message);
-            setLoading(false);
-            return;
-          }
-        }
+      // Verificar duplicatas de email, username e CPF
+      await api.apiPost('/auth/check-unique', { email, username, cpf: cpfDigits });
 
-        if (executeRecaptcha) {
-          try {
-            const captchaToken = await executeRecaptcha('register');
-            await api.verifyCaptcha(captchaToken, 'register');
-          } catch {
-            // Captcha falhou — continua sem
-          }
-        }
+      // Verificar captcha se configurado
+      if (executeRecaptcha) {
+        const captchaToken = await executeRecaptcha('register');
+        await api.verifyCaptcha(captchaToken, 'register');
       }
 
       await signUp(email, password, username, fullName, cpfDigits);
