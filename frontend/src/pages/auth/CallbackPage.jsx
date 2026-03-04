@@ -5,13 +5,9 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function CallbackPage() {
-  const { session, loading, isProfileComplete } = useAuth();
+  const { session, loading } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState(null);
-
-  function getRedirectPath() {
-    return isProfileComplete ? '/' : '/auth/complete-profile';
-  }
 
   // Processa o callback OAuth diretamente
   useEffect(() => {
@@ -43,12 +39,12 @@ export default function CallbackPage() {
     handleCallback();
   }, [navigate]);
 
-  // Fallback: se o contexto detectar a sessão e o perfil
+  // Fallback: se o contexto detectar a sessão
   useEffect(() => {
-    if (!loading && session && isProfileComplete !== null) {
-      navigate(getRedirectPath(), { replace: true });
+    if (!loading && session) {
+      navigate('/', { replace: true });
     }
-  }, [session, loading, isProfileComplete, navigate]);
+  }, [session, loading, navigate]);
 
   // Timeout de segurança
   useEffect(() => {

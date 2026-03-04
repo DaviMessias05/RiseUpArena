@@ -7,7 +7,7 @@ export default function ProtectedRoute({
   requireAdmin = false,
   requireVerified = true,
 }) {
-  const { user, isAdmin, isEmailVerified, isProfileComplete, loading } = useAuth();
+  const { user, isAdmin, isEmailVerified, loading } = useAuth();
 
   if (loading) {
     return (
@@ -56,18 +56,6 @@ export default function ProtectedRoute({
         </div>
       </div>
     );
-  }
-
-  if (isProfileComplete === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (isProfileComplete === false) {
-    return <Navigate to="/auth/complete-profile" replace />;
   }
 
   if (requireAdmin && !isAdmin) {

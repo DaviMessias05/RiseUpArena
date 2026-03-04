@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useCaptcha } from '../../lib/useCaptcha';
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import * as api from '../../lib/api';
 
 function formatCpf(value) {
   const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -35,7 +33,6 @@ function isValidCpf(cpf) {
 
 export default function RegisterPage() {
   const { user, loading: authLoading, signUp, signInWithGoogle } = useAuth();
-  const { executeRecaptcha } = useCaptcha();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -105,24 +102,6 @@ export default function RegisterPage() {
 
     try {
       const cpfDigits = cpf.replace(/\D/g, '');
-
-      // Validar CPF via backend (estrutural + verificação real)
-      const cpfResult = await api.apiPost('/auth/validate-cpf', { cpf: cpfDigits });
-      if (!cpfResult.valid) {
-        setError(cpfResult.error || 'CPF inválido.');
-        setLoading(false);
-        return;
-      }
-
-      // Verificar duplicatas de email, username e CPF
-      await api.apiPost('/auth/check-unique', { email, username, cpf: cpfDigits });
-
-      // Verificar captcha se configurado
-      if (executeRecaptcha) {
-        const captchaToken = await executeRecaptcha('register');
-        await api.verifyCaptcha(captchaToken, 'register');
-      }
-
       await signUp(email, password, username, fullName, cpfDigits);
       setSuccess(true);
     } catch (err) {
