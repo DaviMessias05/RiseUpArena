@@ -4,7 +4,7 @@
  * Rejects the request with 403 if verification fails or score is below 0.5.
  */
 async function verifyCaptcha(req, res, next) {
-  const { captchaToken } = req.body;
+  const captchaToken = req.body.captchaToken || req.body.token;
 
   if (!captchaToken) {
     return res.status(403).json({ error: 'CAPTCHA token is required.' });
