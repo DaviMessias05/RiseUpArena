@@ -104,8 +104,11 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Validar CPF via backend (estrutural + verificação real se configurado)
       const cpfDigits = cpf.replace(/\D/g, '');
+
+      // Tenta validar via backend (CPF + unicidade + captcha)
+      // Se backend não estiver disponível, faz validação local
+      let backendAvailable = true;
       try {
         const cpfResult = await api.apiPost('/auth/validate-cpf', { cpf: cpfDigits });
         if (!cpfResult.valid) {
@@ -114,29 +117,37 @@ export default function RegisterPage() {
           return;
         }
       } catch (cpfErr) {
-        setError(cpfErr.message || 'CPF inválido ou já cadastrado.');
-        setLoading(false);
-        return;
-      }
-
-      // Verificar duplicatas de email, username e CPF
-      try {
-        await api.apiPost('/auth/check-unique', { email, username, cpf: cpfDigits });
-      } catch (uniqueErr) {
-        const errors = uniqueErr.body?.errors;
-        if (errors) {
-          setError(errors.email || errors.username || errors.cpf);
-        } else {
-          setError(uniqueErr.message || 'Email, usuário ou CPF já cadastrado.');
+        if (cpfErr.status === 409 || cpfErr.status === 400) {
+          setError(cpfErr.message || 'CPF inválido ou já cadastrado.');
+          setLoading(false);
+          return;
         }
-        setLoading(false);
-        return;
+        // Backend offline — continua com validação local
+        backendAvailable = false;
       }
 
-      if (executeRecaptcha) {
-        const captchaToken = await executeRecaptcha('register');
-        await api.verifyCaptcha(captchaToken, 'register');
+      if (backendAvailable) {
+        try {
+          await api.apiPost('/auth/check-unique', { email, username, cpf: cpfDigits });
+        } catch (uniqueErr) {
+          if (uniqueErr.status === 409) {
+            const errors = uniqueErr.body?.errors;
+            setError(errors?.email || errors?.username || errors?.cpf || uniqueErr.message);
+            setLoading(false);
+            return;
+          }
+        }
+
+        if (executeRecaptcha) {
+          try {
+            const captchaToken = await executeRecaptcha('register');
+            await api.verifyCaptcha(captchaToken, 'register');
+          } catch {
+            // Captcha falhou — continua sem
+          }
+        }
       }
+
       await signUp(email, password, username, fullName, cpfDigits);
       setSuccess(true);
     } catch (err) {
