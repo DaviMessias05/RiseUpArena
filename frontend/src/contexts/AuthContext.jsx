@@ -122,17 +122,20 @@ export function AuthProvider({ children }) {
   }, [])
 
   const signOut = useCallback(async () => {
-    setUser(null)
-    setProfile(null)
-    setSession(null)
     try {
-      await supabase.auth.signOut()
+      await supabase.auth.signOut({ scope: 'local' })
     } catch (err) {
       console.error('Error signing out:', err.message)
     }
-    // Garante limpeza do token mesmo se signOut falhar
-    const storageKey = `sb-${import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`
-    localStorage.removeItem(storageKey)
+    // Limpa todos os tokens do Supabase do localStorage
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        localStorage.removeItem(key)
+      }
+    }
+    setUser(null)
+    setProfile(null)
+    setSession(null)
   }, [])
 
   const updateProfile = useCallback(async (updates) => {
@@ -169,10 +172,12 @@ export function AuthProvider({ children }) {
     return !!user?.email_confirmed_at || profile?.email_verified === true
   }, [user, profile])
 
+  // null = still loading profile, true/false = determined
   const isProfileComplete = useMemo(() => {
-    if (!profile) return false
+    if (!user) return null
+    if (!profile) return null
     return !!profile.cpf
-  }, [profile])
+  }, [user, profile])
 
   const value = useMemo(() => ({
     user,

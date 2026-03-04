@@ -46,7 +46,7 @@ export default function CompleteProfilePage() {
     if (!authLoading && !user) {
       navigate('/auth/login', { replace: true });
     }
-    if (!authLoading && isProfileComplete) {
+    if (!authLoading && isProfileComplete === true) {
       navigate('/', { replace: true });
     }
   }, [user, authLoading, isProfileComplete, navigate]);

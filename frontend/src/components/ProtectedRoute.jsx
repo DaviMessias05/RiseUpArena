@@ -58,7 +58,15 @@ export default function ProtectedRoute({
     );
   }
 
-  if (!isProfileComplete) {
+  if (isProfileComplete === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-bg">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (isProfileComplete === false) {
     return <Navigate to="/auth/complete-profile" replace />;
   }
 

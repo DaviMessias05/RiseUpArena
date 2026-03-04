@@ -45,7 +45,7 @@ export default function CallbackPage() {
 
   // Fallback: se o contexto detectar a sessão e o perfil
   useEffect(() => {
-    if (!loading && session) {
+    if (!loading && session && isProfileComplete !== null) {
       navigate(getRedirectPath(), { replace: true });
     }
   }, [session, loading, isProfileComplete, navigate]);
