@@ -122,20 +122,23 @@ export function AuthProvider({ children }) {
   }, [])
 
   const signOut = useCallback(async () => {
-    try {
-      await supabase.auth.signOut({ scope: 'local' })
-    } catch (err) {
-      console.error('Error signing out:', err.message)
-    }
-    // Limpa todos os tokens do Supabase do localStorage
-    for (const key of Object.keys(localStorage)) {
-      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-        localStorage.removeItem(key)
-      }
-    }
+    // Limpa state imediatamente
     setUser(null)
     setProfile(null)
     setSession(null)
+    // Limpa localStorage antes do signOut para garantir que tokens não sobrevivam
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('sb-')) {
+        localStorage.removeItem(key)
+      }
+    }
+    try {
+      await supabase.auth.signOut()
+    } catch (err) {
+      // Ignora erros - tokens já foram limpos
+    }
+    // Força reload para limpar qualquer estado residual em memória
+    window.location.href = '/'
   }, [])
 
   const updateProfile = useCallback(async (updates) => {
