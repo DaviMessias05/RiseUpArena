@@ -148,7 +148,7 @@ export default function LobbiesPage() {
 
     try {
       if (!executeRecaptcha) {
-        throw new Error('reCAPTCHA nao carregou. Tente novamente.');
+        throw new Error('reCAPTCHA não carregou. Tente novamente.');
       }
 
       const captchaToken = await executeRecaptcha('create_lobby');
@@ -181,7 +181,7 @@ export default function LobbiesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white">Lobbies</h1>
-          <p className="text-gray-400 mt-1">Encontre ou crie partidas rapidas</p>
+          <p className="text-gray-400 mt-1">Encontre ou crie partidas rápidas</p>
         </div>
         {user && (
           <button

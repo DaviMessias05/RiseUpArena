@@ -6,88 +6,88 @@ export default function TermsPage() {
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
           <Link to="/" className="text-primary-light hover:text-primary text-sm transition-colors">
-            &larr; Voltar ao inicio
+            &larr; Voltar ao início
           </Link>
         </div>
 
         <div className="bg-surface rounded-2xl border border-surface-light/50 p-8 space-y-6">
-          <h1 className="text-3xl font-bold text-white">Termos de Servico</h1>
-          <p className="text-sm text-gray-500">Ultima atualizacao: 04 de marco de 2026</p>
+          <h1 className="text-3xl font-bold text-white">Termos de Serviço</h1>
+          <p className="text-sm text-gray-500">Última atualização: 04 de março de 2026</p>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold text-white">1. Aceitacao dos Termos</h2>
+            <h2 className="text-xl font-semibold text-white">1. Aceitação dos Termos</h2>
             <p className="text-gray-400 leading-relaxed">
-              Ao acessar e utilizar a plataforma Rise Up Arena ("Plataforma"), voce concorda em cumprir e estar vinculado a estes Termos de Servico. Se voce nao concordar com qualquer parte destes termos, nao devera utilizar a Plataforma.
+              Ao acessar e utilizar a plataforma Rise Up Arena ("Plataforma"), você concorda em cumprir e estar vinculado a estes Termos de Serviço. Se você não concordar com qualquer parte destes termos, não deverá utilizar a Plataforma.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold text-white">2. Descricao do Servico</h2>
+            <h2 className="text-xl font-semibold text-white">2. Descrição do Serviço</h2>
             <p className="text-gray-400 leading-relaxed">
-              A Rise Up Arena e uma plataforma de esports competitivos que oferece servicos de matchmaking, campeonatos, rankings e loja virtual para jogadores. A Plataforma permite que usuarios participem de lobbies, torneios e acompanhem suas estatisticas.
+              A Rise Up Arena é uma plataforma de esports competitivos que oferece serviços de matchmaking, campeonatos, rankings e loja virtual para jogadores. A Plataforma permite que usuários participem de lobbies, torneios e acompanhem suas estatísticas.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-xl font-semibold text-white">3. Cadastro e Conta</h2>
             <p className="text-gray-400 leading-relaxed">
-              Para utilizar os servicos da Plataforma, voce devera criar uma conta fornecendo informacoes verdadeiras, completas e atualizadas, incluindo nome completo, CPF, email e nome de usuario. Voce e responsavel por manter a confidencialidade de suas credenciais de acesso e por todas as atividades realizadas em sua conta.
+              Para utilizar os serviços da Plataforma, você deverá criar uma conta fornecendo informações verdadeiras, completas e atualizadas, incluindo nome completo, CPF, email e nome de usuário. Você é responsável por manter a confidencialidade de suas credenciais de acesso e por todas as atividades realizadas em sua conta.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-xl font-semibold text-white">4. Elegibilidade</h2>
             <p className="text-gray-400 leading-relaxed">
-              Voce declara ter pelo menos 16 anos de idade para utilizar a Plataforma. Menores de 18 anos devem ter autorizacao dos pais ou responsaveis legais. A Plataforma reserva-se o direito de solicitar comprovacao de idade a qualquer momento.
+              Você declara ter pelo menos 16 anos de idade para utilizar a Plataforma. Menores de 18 anos devem ter autorização dos pais ou responsáveis legais. A Plataforma reserva-se o direito de solicitar comprovação de idade a qualquer momento.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold text-white">5. Conduta do Usuario</h2>
-            <p className="text-gray-400 leading-relaxed">Ao utilizar a Plataforma, voce concorda em nao:</p>
+            <h2 className="text-xl font-semibold text-white">5. Conduta do Usuário</h2>
+            <p className="text-gray-400 leading-relaxed">Ao utilizar a Plataforma, você concorda em não:</p>
             <ul className="list-disc list-inside text-gray-400 space-y-1 ml-2">
-              <li>Utilizar cheats, hacks, bots ou qualquer software nao autorizado</li>
-              <li>Assediar, ameacar ou intimidar outros usuarios</li>
-              <li>Criar contas falsas ou multiplas contas</li>
+              <li>Utilizar cheats, hacks, bots ou qualquer software não autorizado</li>
+              <li>Assediar, ameaçar ou intimidar outros usuários</li>
+              <li>Criar contas falsas ou múltiplas contas</li>
               <li>Manipular resultados de partidas ou rankings</li>
-              <li>Compartilhar conteudo ofensivo, ilegal ou inapropriado</li>
+              <li>Compartilhar conteúdo ofensivo, ilegal ou inapropriado</li>
               <li>Violar direitos de propriedade intelectual de terceiros</li>
-              <li>Tentar acessar sistemas ou dados sem autorizacao</li>
+              <li>Tentar acessar sistemas ou dados sem autorização</li>
             </ul>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold text-white">6. Creditos e Loja Virtual</h2>
+            <h2 className="text-xl font-semibold text-white">6. Créditos e Loja Virtual</h2>
             <p className="text-gray-400 leading-relaxed">
-              A Plataforma pode oferecer um sistema de creditos virtuais que podem ser utilizados na loja da Plataforma. Creditos nao possuem valor monetario real e nao podem ser trocados por dinheiro. A Plataforma reserva-se o direito de modificar precos e disponibilidade de itens a qualquer momento.
+              A Plataforma pode oferecer um sistema de créditos virtuais que podem ser utilizados na loja da Plataforma. Créditos não possuem valor monetário real e não podem ser trocados por dinheiro. A Plataforma reserva-se o direito de modificar preços e disponibilidade de itens a qualquer momento.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold text-white">7. Suspensao e Encerramento</h2>
+            <h2 className="text-xl font-semibold text-white">7. Suspensão e Encerramento</h2>
             <p className="text-gray-400 leading-relaxed">
-              A Rise Up Arena reserva-se o direito de suspender ou encerrar sua conta, a qualquer momento e sem aviso previo, caso haja violacao destes Termos de Servico ou por qualquer outro motivo considerado razoavel pela administracao da Plataforma.
+              A Rise Up Arena reserva-se o direito de suspender ou encerrar sua conta, a qualquer momento e sem aviso prévio, caso haja violação destes Termos de Serviço ou por qualquer outro motivo considerado razoável pela administração da Plataforma.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold text-white">8. Limitacao de Responsabilidade</h2>
+            <h2 className="text-xl font-semibold text-white">8. Limitação de Responsabilidade</h2>
             <p className="text-gray-400 leading-relaxed">
-              A Plataforma e fornecida "como esta", sem garantias de qualquer tipo. A Rise Up Arena nao se responsabiliza por danos diretos, indiretos, incidentais ou consequenciais decorrentes do uso ou impossibilidade de uso da Plataforma.
+              A Plataforma é fornecida "como está", sem garantias de qualquer tipo. A Rise Up Arena não se responsabiliza por danos diretos, indiretos, incidentais ou consequenciais decorrentes do uso ou impossibilidade de uso da Plataforma.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold text-white">9. Alteracoes nos Termos</h2>
+            <h2 className="text-xl font-semibold text-white">9. Alterações nos Termos</h2>
             <p className="text-gray-400 leading-relaxed">
-              A Rise Up Arena reserva-se o direito de alterar estes Termos de Servico a qualquer momento. As alteracoes serao comunicadas atraves da Plataforma e entrarao em vigor imediatamente apos sua publicacao. O uso continuado da Plataforma apos as alteracoes constitui aceitacao dos novos termos.
+              A Rise Up Arena reserva-se o direito de alterar estes Termos de Serviço a qualquer momento. As alterações serão comunicadas através da Plataforma e entrarão em vigor imediatamente após sua publicação. O uso continuado da Plataforma após as alterações constitui aceitação dos novos termos.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-xl font-semibold text-white">10. Contato</h2>
             <p className="text-gray-400 leading-relaxed">
-              Em caso de duvidas sobre estes Termos de Servico, entre em contato conosco atraves do email: suporte@riseuparena.com
+              Em caso de dúvidas sobre estes Termos de Serviço, entre em contato conosco através do email: suporte@riseuparena.com
             </p>
           </section>
         </div>

@@ -149,7 +149,7 @@ export default function ProfilePage() {
             avatar_url: profileResult.value?.avatar_url || '',
           });
         } else {
-          throw new Error('Perfil nao encontrado.');
+          throw new Error('Perfil não encontrado.');
         }
 
         if (statsResult.status === 'fulfilled') {
@@ -202,7 +202,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4">
         <User size={64} className="text-surface-lighter mb-4" />
-        <p className="text-gray-400 text-lg">Faca login para ver seu perfil.</p>
+        <p className="text-gray-400 text-lg">Faça login para ver seu perfil.</p>
       </div>
     );
   }
@@ -210,7 +210,7 @@ export default function ProfilePage() {
   if (error || !profileData) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4">
-        <p className="text-danger text-lg mb-4">{error || 'Perfil nao encontrado.'}</p>
+        <p className="text-danger text-lg mb-4">{error || 'Perfil não encontrado.'}</p>
       </div>
     );
   }
@@ -281,7 +281,7 @@ export default function ProfilePage() {
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Nome de exibicao
+                Nome de exibição
               </label>
               <input
                 type="text"
@@ -313,7 +313,7 @@ export default function ProfilePage() {
                 onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                 rows={3}
                 className="w-full px-4 py-3 bg-surface-light border border-surface-lighter rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-                placeholder="Conte algo sobre voce..."
+                placeholder="Conte algo sobre você..."
                 maxLength={200}
               />
             </div>
@@ -355,7 +355,7 @@ export default function ProfilePage() {
       {/* Stats Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <StatCard icon={Swords} label="Partidas" value={totalGames} color="text-primary-light" />
-        <StatCard icon={Trophy} label="Vitorias" value={totalWins} color="text-success" />
+        <StatCard icon={Trophy} label="Vitórias" value={totalWins} color="text-success" />
         <StatCard
           icon={Gamepad2}
           label="Jogos"
@@ -380,7 +380,7 @@ export default function ProfilePage() {
               : 'bg-surface-light text-gray-400 hover:text-white hover:bg-surface-lighter'
           }`}
         >
-          Estatisticas por Jogo
+          Estatísticas por Jogo
         </button>
         <button
           onClick={() => setActiveTab('history')}
@@ -390,7 +390,7 @@ export default function ProfilePage() {
               : 'bg-surface-light text-gray-400 hover:text-white hover:bg-surface-lighter'
           }`}
         >
-          Historico de Partidas
+          Histórico de Partidas
         </button>
       </div>
 
@@ -400,7 +400,7 @@ export default function ProfilePage() {
           {gameStats.length === 0 ? (
             <div className="bg-surface rounded-xl border border-surface-light/50 p-12 text-center">
               <Gamepad2 size={48} className="text-surface-lighter mx-auto mb-4" />
-              <p className="text-gray-400">Nenhuma estatistica disponivel.</p>
+              <p className="text-gray-400">Nenhuma estatística disponível.</p>
               <p className="text-sm text-gray-500 mt-1">Jogue partidas para ver suas stats!</p>
             </div>
           ) : (
@@ -433,7 +433,7 @@ export default function ProfilePage() {
                       <div className="text-xl font-bold text-white">{stat.rating || 0}</div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-500">Vitorias</div>
+                      <div className="text-xs text-gray-500">Vitórias</div>
                       <div className="text-xl font-bold text-success">{wins}</div>
                     </div>
                     <div>

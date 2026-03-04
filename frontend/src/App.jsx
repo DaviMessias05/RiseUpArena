@@ -15,7 +15,7 @@ const TournamentsPage = lazy(() => import('./pages/TournamentsPage'))
 const LobbiesPage = lazy(() => import('./pages/LobbiesPage'))
 const LobbyDetailPage = lazy(() => import('./pages/LobbyDetailPage'))
 const RankingsPage = lazy(() => import('./pages/RankingsPage'))
-const VipsPage = lazy(() => import('./pages/VipsPage'))
+const StorePage = lazy(() => import('./pages/StorePage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const AdminPage = lazy(() => import('./pages/admin/AdminPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
@@ -63,10 +63,10 @@ export default function App() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route
-              path="/vips"
+              path="/store"
               element={
                 <ProtectedRoute>
-                  <VipsPage />
+                  <StorePage />
                 </ProtectedRoute>
               }
             />

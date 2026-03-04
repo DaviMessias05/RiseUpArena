@@ -14,7 +14,8 @@ CREATE TABLE profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   username VARCHAR(30) UNIQUE NOT NULL,
   display_name VARCHAR(60),
-  email VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  cpf VARCHAR(11) UNIQUE,
   avatar_url TEXT,
   bio TEXT,
   role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('user', 'admin', 'moderator')),
@@ -25,6 +26,8 @@ CREATE TABLE profiles (
 );
 
 CREATE INDEX idx_profiles_username ON profiles(username);
+CREATE INDEX idx_profiles_email ON profiles(email);
+CREATE INDEX idx_profiles_cpf ON profiles(cpf);
 CREATE INDEX idx_profiles_role ON profiles(role);
 
 -- ============================================
@@ -366,14 +369,15 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO profiles (id, email, username, display_name, avatar_url, email_verified)
+  INSERT INTO profiles (id, email, username, display_name, avatar_url, email_verified, cpf)
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'username', SPLIT_PART(NEW.email, '@', 1) || '_' || SUBSTR(NEW.id::TEXT, 1, 6)),
     COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1)),
     COALESCE(NEW.raw_user_meta_data->>'avatar_url', NULL),
-    COALESCE(NEW.email_confirmed_at IS NOT NULL, FALSE)
+    COALESCE(NEW.email_confirmed_at IS NOT NULL, FALSE),
+    NEW.raw_user_meta_data->>'cpf'
   );
   RETURN NEW;
 END;

@@ -13,10 +13,10 @@ import {
 import * as api from '../lib/api';
 
 const TABS = [
-  { id: 'overview', label: 'Visao Geral', icon: Gamepad2 },
+  { id: 'overview', label: 'Visão Geral', icon: Gamepad2 },
   { id: 'rankings', label: 'Rankings', icon: Trophy },
   { id: 'tournaments', label: 'Campeonatos', icon: Medal },
-  { id: 'stats', label: 'Estatisticas', icon: BarChart3 },
+  { id: 'stats', label: 'Estatísticas', icon: BarChart3 },
 ];
 
 function RankBadge({ position }) {
@@ -85,7 +85,7 @@ export default function GameDetailPage() {
         if (gameData.status === 'fulfilled') {
           setGame(gameData.value);
         } else {
-          throw new Error('Jogo nao encontrado.');
+          throw new Error('Jogo não encontrado.');
         }
 
         if (rankingsData.status === 'fulfilled') {
@@ -123,7 +123,7 @@ export default function GameDetailPage() {
   if (error || !game) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4">
-        <p className="text-danger text-lg mb-4">{error || 'Jogo nao encontrado.'}</p>
+        <p className="text-danger text-lg mb-4">{error || 'Jogo não encontrado.'}</p>
         <Link
           to="/games"
           className="flex items-center gap-2 text-primary-light hover:text-primary transition-colors"
@@ -200,7 +200,7 @@ export default function GameDetailPage() {
             <div className="bg-surface rounded-xl border border-surface-light/50 p-6">
               <h2 className="text-xl font-bold text-white mb-4">Sobre o Jogo</h2>
               <p className="text-gray-300 leading-relaxed">
-                {game.description || 'Sem descricao disponivel para este jogo.'}
+                {game.description || 'Sem descrição disponível para este jogo.'}
               </p>
             </div>
 
@@ -282,7 +282,7 @@ export default function GameDetailPage() {
                   <thead>
                     <tr className="border-b border-surface-light/50">
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Posicao
+                        Posição
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Jogador
@@ -417,7 +417,7 @@ export default function GameDetailPage() {
 
         {activeTab === 'stats' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-white mb-4">Estatisticas do Jogo</h2>
+            <h2 className="text-xl font-bold text-white mb-4">Estatísticas do Jogo</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-surface rounded-xl border border-surface-light/50 p-6 text-center">
                 <div className="text-3xl font-bold text-white">{rankings.length}</div>
@@ -439,13 +439,13 @@ export default function GameDetailPage() {
                       )
                     : 0}
                 </div>
-                <div className="text-sm text-gray-400 mt-1">Rating Medio</div>
+                <div className="text-sm text-gray-400 mt-1">Rating Médio</div>
               </div>
             </div>
 
             {rankings.length > 0 && (
               <div className="bg-surface rounded-xl border border-surface-light/50 p-6">
-                <h3 className="text-lg font-bold text-white mb-4">Distribuicao de Tiers</h3>
+                <h3 className="text-lg font-bold text-white mb-4">Distribuição de Tiers</h3>
                 <div className="space-y-3">
                   {['Challenger', 'Diamond', 'Platinum', 'Gold', 'Silver', 'Bronze'].map(
                     (tierName) => {

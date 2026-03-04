@@ -160,7 +160,7 @@ export default function HomePage() {
               Plataforma competitiva de esports
             </p>
             <p className="mt-2 text-gray-500 max-w-xl mx-auto">
-              Participe de lobbies, campeonatos e suba no ranking. Prove que voce e o melhor.
+              Participe de lobbies, campeonatos e suba no ranking. Prove que você é o melhor.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               {user ? (
@@ -193,7 +193,7 @@ export default function HomePage() {
                     to="/auth/login"
                     className="px-8 py-3 bg-surface-light hover:bg-surface-lighter text-white font-bold rounded-xl border border-surface-lighter transition-colors"
                   >
-                    Ja tenho conta
+                    Já tenho conta
                   </Link>
                 </>
               )}
@@ -241,7 +241,7 @@ export default function HomePage() {
           ) : games.length === 0 ? (
             <div className="text-center py-16">
               <Gamepad2 size={48} className="text-surface-lighter mx-auto mb-4" />
-              <p className="text-gray-400">Nenhum jogo disponivel no momento.</p>
+              <p className="text-gray-400">Nenhum jogo disponível no momento.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -268,7 +268,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-3xl font-bold text-white">Campeonatos Recentes</h2>
-              <p className="text-gray-400 mt-1">Participe e conquiste premios</p>
+              <p className="text-gray-400 mt-1">Participe e conquiste prêmios</p>
             </div>
             <Link
               to="/tournaments"
@@ -286,7 +286,7 @@ export default function HomePage() {
           ) : tournaments.length === 0 ? (
             <div className="text-center py-16">
               <Trophy size={48} className="text-surface-lighter mx-auto mb-4" />
-              <p className="text-gray-400">Nenhum campeonato disponivel.</p>
+              <p className="text-gray-400">Nenhum campeonato disponível.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -321,7 +321,7 @@ export default function HomePage() {
               to="/auth/register"
               className="inline-flex items-center gap-2 mt-8 px-10 py-4 bg-gradient-to-r from-[#f28c38] to-[#e8611a] hover:from-[#f59e0b] hover:to-[#f28c38] text-white font-bold text-lg rounded-xl transition-all shadow-lg shadow-[#e8611a]/25"
             >
-              Comecar Agora
+              Começar Agora
               <ArrowRight size={22} />
             </Link>
           </div>

@@ -65,28 +65,28 @@ export default function RegisterPage() {
       return 'Informe seu nome completo (nome e sobrenome).';
     }
     if (!isValidCpf(cpf)) {
-      return 'CPF invalido.';
+      return 'CPF inválido.';
     }
     if (username.length < 3) {
-      return 'O nome de usuario deve ter pelo menos 3 caracteres.';
+      return 'O nome de usuário deve ter pelo menos 3 caracteres.';
     }
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      return 'O nome de usuario deve conter apenas letras, numeros e underline.';
+      return 'O nome de usuário deve conter apenas letras, números e underline.';
     }
     if (username.length > 20) {
-      return 'O nome de usuario deve ter no maximo 20 caracteres.';
+      return 'O nome de usuário deve ter no máximo 20 caracteres.';
     }
     if (password.length < 8) {
       return 'A senha deve ter pelo menos 8 caracteres.';
     }
     if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-      return 'A senha deve conter pelo menos uma letra e um numero.';
+      return 'A senha deve conter pelo menos uma letra e um número.';
     }
     if (password !== confirmPassword) {
-      return 'As senhas nao coincidem.';
+      return 'As senhas não coincidem.';
     }
     if (!acceptedTerms) {
-      return 'Voce deve aceitar os Termos de Servico para continuar.';
+      return 'Você deve aceitar os Termos de Serviço para continuar.';
     }
     return null;
   }
@@ -104,11 +104,40 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
+      // Validar CPF via backend (estrutural + verificação real se configurado)
+      const cpfDigits = cpf.replace(/\D/g, '');
+      try {
+        const cpfResult = await api.apiPost('/auth/validate-cpf', { cpf: cpfDigits });
+        if (!cpfResult.valid) {
+          setError(cpfResult.error || 'CPF inválido.');
+          setLoading(false);
+          return;
+        }
+      } catch (cpfErr) {
+        setError(cpfErr.message || 'CPF inválido ou já cadastrado.');
+        setLoading(false);
+        return;
+      }
+
+      // Verificar duplicatas de email, username e CPF
+      try {
+        await api.apiPost('/auth/check-unique', { email, username, cpf: cpfDigits });
+      } catch (uniqueErr) {
+        const errors = uniqueErr.body?.errors;
+        if (errors) {
+          setError(errors.email || errors.username || errors.cpf);
+        } else {
+          setError(uniqueErr.message || 'Email, usuário ou CPF já cadastrado.');
+        }
+        setLoading(false);
+        return;
+      }
+
       if (executeRecaptcha) {
         const captchaToken = await executeRecaptcha('register');
         await api.verifyCaptcha(captchaToken, 'register');
       }
-      await signUp(email, password, username, fullName, cpf.replace(/\D/g, ''));
+      await signUp(email, password, username, fullName, cpfDigits);
       setSuccess(true);
     } catch (err) {
       setError(err.message || 'Erro ao criar conta. Tente novamente.');
@@ -137,11 +166,11 @@ export default function RegisterPage() {
             <CheckCircle size={64} className="text-success mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-white mb-2">Conta criada!</h1>
             <p className="text-gray-400 mb-6">
-              Verifique seu email para confirmar sua conta. Enviamos um link de verificacao para{' '}
+              Verifique seu email para confirmar sua conta. Enviamos um link de verificação para{' '}
               <span className="text-white font-medium">{email}</span>.
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              Nao recebeu o email? Verifique sua pasta de spam.
+              Não recebeu o email? Verifique sua pasta de spam.
             </p>
             <Link
               to="/auth/login"
@@ -212,7 +241,7 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-1.5">
-                Nome de usuario
+                Nome de usuário
               </label>
               <input
                 id="username"
@@ -225,7 +254,7 @@ export default function RegisterPage() {
                 maxLength={20}
               />
               <p className="mt-1 text-xs text-gray-500">
-                Letras, numeros e underline. 3-20 caracteres.
+                Letras, números e underline. 3-20 caracteres.
               </p>
             </div>
 
@@ -256,7 +285,7 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`${inputClass} pr-12`}
-                  placeholder="Minimo 8 caracteres (letra + numero)"
+                  placeholder="Mínimo 8 caracteres (letra + número)"
                 />
                 <button
                   type="button"
@@ -282,7 +311,7 @@ export default function RegisterPage() {
                 placeholder="Repita a senha"
               />
               {confirmPassword && password !== confirmPassword && (
-                <p className="mt-1 text-xs text-danger">As senhas nao coincidem.</p>
+                <p className="mt-1 text-xs text-danger">As senhas não coincidem.</p>
               )}
             </div>
 
@@ -297,11 +326,11 @@ export default function RegisterPage() {
               <label htmlFor="terms" className="text-sm text-gray-400 cursor-pointer">
                 Li e aceito os{' '}
                 <Link to="/terms" className="text-primary-light hover:text-primary font-medium transition-colors underline">
-                  Termos de Servico
+                  Termos de Serviço
                 </Link>{' '}
                 e a{' '}
                 <Link to="/privacy" className="text-primary-light hover:text-primary font-medium transition-colors underline">
-                  Politica de Privacidade
+                  Política de Privacidade
                 </Link>.
               </label>
             </div>
@@ -362,7 +391,7 @@ export default function RegisterPage() {
           </button>
 
           <p className="mt-6 text-center text-sm text-gray-400">
-            Ja tem uma conta?{' '}
+            Já tem uma conta?{' '}
             <Link to="/auth/login" className="text-primary-light hover:text-primary font-medium transition-colors">
               Entrar
             </Link>

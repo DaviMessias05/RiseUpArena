@@ -172,7 +172,7 @@ export default function LoginPage() {
           </button>
 
           <p className="mt-6 text-center text-sm text-gray-400">
-            Nao tem uma conta?{' '}
+            Não tem uma conta?{' '}
             <Link to="/auth/register" className="text-primary-light hover:text-primary font-medium transition-colors">
               Registre-se
             </Link>

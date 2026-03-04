@@ -21,7 +21,7 @@ import * as api from '../lib/api';
 
 const STATUS_LABELS = {
   waiting: 'Aguardando jogadores',
-  ready: 'Aguardando inicio',
+  ready: 'Aguardando início',
   in_match: 'Partida em andamento',
   finished: 'Partida finalizada',
 };
@@ -339,7 +339,7 @@ export default function LobbyDetailPage() {
   if (error || !lobby) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4">
-        <p className="text-danger text-lg mb-4">{error || 'Lobby nao encontrado.'}</p>
+        <p className="text-danger text-lg mb-4">{error || 'Lobby não encontrado.'}</p>
         <Link
           to="/lobbies"
           className="flex items-center gap-2 text-primary-light hover:text-primary transition-colors"
@@ -419,7 +419,7 @@ export default function LobbyDetailPage() {
             <div className="bg-surface rounded-xl border border-primary/30 p-6 text-center">
               <Swords size={40} className="text-primary-light mx-auto mb-3 animate-pulse" />
               <h2 className="text-xl font-bold text-white mb-2">Partida em Andamento</h2>
-              <p className="text-gray-400">A partida esta acontecendo agora. Boa sorte!</p>
+              <p className="text-gray-400">A partida está acontecendo agora. Boa sorte!</p>
               {lobby.match_id && (
                 <p className="text-sm text-gray-500 mt-2">Match ID: {lobby.match_id}</p>
               )}

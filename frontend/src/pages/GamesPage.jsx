@@ -77,7 +77,7 @@ export default function GamesPage() {
     <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white">Jogos</h1>
-        <p className="text-gray-400 mt-1">Explore os jogos disponiveis na plataforma</p>
+        <p className="text-gray-400 mt-1">Explore os jogos disponíveis na plataforma</p>
       </div>
 
       {loading ? (
@@ -97,8 +97,8 @@ export default function GamesPage() {
       ) : games.length === 0 ? (
         <div className="text-center py-20">
           <Gamepad2 size={64} className="text-surface-lighter mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Nenhum jogo disponivel</h2>
-          <p className="text-gray-400">Novos jogos serao adicionados em breve.</p>
+          <h2 className="text-xl font-bold text-white mb-2">Nenhum jogo disponível</h2>
+          <p className="text-gray-400">Novos jogos serão adicionados em breve.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

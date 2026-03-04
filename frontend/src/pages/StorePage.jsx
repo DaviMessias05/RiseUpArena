@@ -1,16 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
-  ShoppingBag,
   Loader2,
   Coins,
   AlertCircle,
   CheckCircle,
-  Package,
   Zap,
   Crown,
   Star,
   Gem,
   Rocket,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import * as api from '../lib/api';
@@ -68,13 +67,72 @@ const RC_PACKAGES = [
   },
 ];
 
+const VIP_PLANS = [
+  {
+    id: 'vip_bronze',
+    name: 'VIP Bronze',
+    price: 19.90,
+    duration: '30 dias',
+    icon: Star,
+    color: 'from-amber-700 to-amber-800',
+    shadow: 'shadow-amber-700/25',
+    borderColor: 'border-amber-700',
+    popular: false,
+    benefits: [
+      'Emblema VIP Bronze no perfil',
+      'Bônus de 10% em RC ganhos',
+      'Acesso antecipado a lobbies',
+      'Cor exclusiva no chat',
+    ],
+  },
+  {
+    id: 'vip_silver',
+    name: 'VIP Prata',
+    price: 39.90,
+    duration: '30 dias',
+    icon: Gem,
+    color: 'from-gray-400 to-gray-500',
+    shadow: 'shadow-gray-400/25',
+    borderColor: 'border-gray-400',
+    popular: true,
+    benefits: [
+      'Todos os benefícios do Bronze',
+      'Emblema VIP Prata no perfil',
+      'Bônus de 25% em RC ganhos',
+      'Prioridade na fila de matchmaking',
+      'Acesso a torneios exclusivos',
+      'Banner personalizado no perfil',
+    ],
+  },
+  {
+    id: 'vip_gold',
+    name: 'VIP Ouro',
+    price: 69.90,
+    duration: '30 dias',
+    icon: Crown,
+    color: 'from-yellow-500 to-amber-500',
+    shadow: 'shadow-yellow-500/25',
+    borderColor: 'border-yellow-500',
+    popular: false,
+    benefits: [
+      'Todos os benefícios do Prata',
+      'Emblema VIP Ouro no perfil',
+      'Bônus de 50% em RC ganhos',
+      'Acesso VIP ao suporte',
+      'Convites ilimitados para lobbies privadas',
+      'Destaque no ranking',
+      'Efeitos exclusivos no perfil',
+    ],
+  },
+];
+
 function formatNumber(n) {
   return n.toLocaleString('pt-BR');
 }
 
 function RCPackageCard({ pkg, onBuy, buying }) {
   const Icon = pkg.icon;
-  const pricePerRC = (pkg.price / pkg.rc * 1000).toFixed(2);
+  const pricePerRC = ((pkg.price / pkg.rc) * 1000).toFixed(2);
 
   return (
     <div className={`relative bg-surface rounded-2xl border ${pkg.popular ? 'border-primary' : 'border-surface-light/50'} overflow-hidden flex flex-col transition-all hover:-translate-y-1 hover:shadow-xl ${pkg.shadow}`}>
@@ -99,11 +157,7 @@ function RCPackageCard({ pkg, onBuy, buying }) {
             disabled={buying}
             className={`w-full py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r ${pkg.color} hover:opacity-90 text-white shadow-lg ${pkg.shadow}`}
           >
-            {buying ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              <>R$ {pkg.price}</>
-            )}
+            {buying ? <Loader2 size={18} className="animate-spin" /> : <>R$ {pkg.price}</>}
           </button>
         </div>
       </div>
@@ -111,50 +165,43 @@ function RCPackageCard({ pkg, onBuy, buying }) {
   );
 }
 
-function StoreProductCard({ product, onBuy, buying, userAC }) {
-  const canAfford = userAC >= (product.price || 0);
+function VipPlanCard({ plan, onBuy, buying }) {
+  const Icon = plan.icon;
 
   return (
-    <div className="bg-surface rounded-xl border border-surface-light/50 overflow-hidden flex flex-col">
-      <div className="aspect-square bg-surface-light relative overflow-hidden">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Package size={48} className="text-surface-lighter" />
-          </div>
-        )}
-      </div>
-      <div className="p-5 flex flex-col flex-1">
-        <h3 className="text-lg font-bold text-white">{product.name}</h3>
-        <p className="text-sm text-gray-400 mt-1 flex-1 line-clamp-3">
-          {product.description || 'Sem descricao.'}
-        </p>
-        <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Coins size={18} className="text-emerald-400" />
-            <span className="text-lg font-bold text-emerald-400">{formatNumber(product.price || 0)}</span>
-            <span className="text-xs text-gray-500">AC</span>
-          </div>
+    <div className={`relative bg-surface rounded-2xl border ${plan.popular ? plan.borderColor : 'border-surface-light/50'} overflow-hidden flex flex-col transition-all hover:-translate-y-1 hover:shadow-xl ${plan.shadow}`}>
+      {plan.popular && (
+        <div className={`absolute top-0 left-0 right-0 bg-gradient-to-r ${plan.color} text-center py-1`}>
+          <span className="text-xs font-bold text-white uppercase tracking-wider">Mais Popular</span>
+        </div>
+      )}
+      <div className={`${plan.popular ? 'pt-10' : 'pt-6'} px-6 pb-6 flex flex-col flex-1`}>
+        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-4`}>
+          <Icon size={28} className="text-white" />
+        </div>
+        <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+        <p className="text-xs text-gray-500 mt-1">{plan.duration}</p>
+        <div className="mt-3 flex items-baseline gap-1">
+          <span className="text-sm text-gray-400">R$</span>
+          <span className="text-3xl font-black text-white">{plan.price.toFixed(2).replace('.', ',')}</span>
+        </div>
+
+        <ul className="mt-5 space-y-2.5 flex-1">
+          {plan.benefits.map((benefit, i) => (
+            <li key={i} className="flex items-start gap-2">
+              <Check size={16} className="text-primary-light flex-shrink-0 mt-0.5" />
+              <span className="text-sm text-gray-300">{benefit}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-6">
           <button
-            onClick={() => onBuy(product)}
-            disabled={buying || !canAfford}
-            className={`px-5 py-2 font-bold rounded-lg text-sm transition-colors flex items-center gap-1.5 disabled:cursor-not-allowed ${
-              canAfford
-                ? 'bg-primary hover:bg-primary-light text-white disabled:opacity-50'
-                : 'bg-surface-lighter text-gray-500'
-            }`}
+            onClick={() => onBuy(plan)}
+            disabled={buying}
+            className={`w-full py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r ${plan.color} hover:opacity-90 text-white shadow-lg ${plan.shadow}`}
           >
-            {buying ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <ShoppingBag size={16} />
-            )}
-            {canAfford ? 'Comprar' : 'Sem AC'}
+            {buying ? <Loader2 size={18} className="animate-spin" /> : 'Assinar'}
           </button>
         </div>
       </div>
@@ -164,55 +211,14 @@ function StoreProductCard({ product, onBuy, buying, userAC }) {
 
 export default function StorePage() {
   const { user, profile } = useAuth();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [buyingId, setBuyingId] = useState(null);
   const [buyingPkg, setBuyingPkg] = useState(null);
+  const [buyingVip, setBuyingVip] = useState(null);
   const [buySuccess, setBuySuccess] = useState(null);
   const [buyError, setBuyError] = useState(null);
   const [activeTab, setActiveTab] = useState('coins');
 
   const userRC = profile?.rise_coins || 0;
   const userAC = profile?.arena_coins || 0;
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchProducts() {
-      try {
-        const data = await api.getStoreProducts();
-        if (!cancelled) {
-          setProducts(Array.isArray(data) ? data : []);
-        }
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchProducts();
-    return () => { cancelled = true; };
-  }, []);
-
-  async function handleBuyProduct(product) {
-    if (!user) return;
-    setBuyingId(product.id);
-    setBuySuccess(null);
-    setBuyError(null);
-
-    try {
-      await api.createOrder(product.id, 1);
-      setBuySuccess(`"${product.name}" comprado com sucesso!`);
-      setTimeout(() => setBuySuccess(null), 4000);
-    } catch (err) {
-      setBuyError(err.message || 'Erro ao comprar produto.');
-      setTimeout(() => setBuyError(null), 4000);
-    } finally {
-      setBuyingId(null);
-    }
-  }
 
   async function handleBuyRC(pkg) {
     setBuyingPkg(pkg.id);
@@ -231,13 +237,30 @@ export default function StorePage() {
     }
   }
 
+  async function handleBuyVip(plan) {
+    setBuyingVip(plan.id);
+    setBuySuccess(null);
+    setBuyError(null);
+
+    try {
+      await api.apiPost('/store/buy-vip', { plan_id: plan.id });
+      setBuySuccess(`Plano ${plan.name} ativado com sucesso!`);
+      setTimeout(() => setBuySuccess(null), 4000);
+    } catch (err) {
+      setBuyError(err.message || 'Erro ao adquirir plano VIP.');
+      setTimeout(() => setBuyError(null), 4000);
+    } finally {
+      setBuyingVip(null);
+    }
+  }
+
   return (
     <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white">Loja</h1>
-          <p className="text-gray-400 mt-1">Adquira Rise Coins e itens exclusivos</p>
+          <p className="text-gray-400 mt-1">Adquira Rise Coins e planos VIP</p>
         </div>
         {user && (
           <div className="flex items-center gap-4">
@@ -268,14 +291,14 @@ export default function StorePage() {
           Rise Coins (RC)
         </button>
         <button
-          onClick={() => setActiveTab('items')}
+          onClick={() => setActiveTab('vips')}
           className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-            activeTab === 'items'
-              ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/25'
+            activeTab === 'vips'
+              ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-lg shadow-yellow-500/25'
               : 'bg-surface-light text-gray-400 hover:text-white hover:bg-surface-lighter'
           }`}
         >
-          Loja de Itens
+          Planos VIP
         </button>
       </div>
 
@@ -316,7 +339,7 @@ export default function StorePage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-white text-sm">Arena Coins (AC)</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">Moeda ganha jogando. Receba por vitorias, participacao em eventos, desafios e conquistas.</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Moeda ganha jogando. Receba por vitórias, participação em eventos, desafios e conquistas.</p>
                 </div>
               </div>
             </div>
@@ -326,57 +349,28 @@ export default function StorePage() {
           <h2 className="text-xl font-bold text-white mb-4">Pacotes de Rise Coins</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
             {RC_PACKAGES.map((pkg) => (
-              <RCPackageCard
-                key={pkg.id}
-                pkg={pkg}
-                onBuy={handleBuyRC}
-                buying={buyingPkg === pkg.id}
-              />
+              <RCPackageCard key={pkg.id} pkg={pkg} onBuy={handleBuyRC} buying={buyingPkg === pkg.id} />
             ))}
           </div>
 
           <p className="text-xs text-gray-500 mt-6 text-center">
-            Apos a compra, o saldo de Rise Coins e atualizado automaticamente na sua conta.
+            Após a compra, o saldo de Rise Coins é atualizado automaticamente na sua conta.
           </p>
         </div>
       )}
 
-      {/* Items Tab */}
-      {activeTab === 'items' && (
+      {/* VIPs Tab */}
+      {activeTab === 'vips' && (
         <div>
-          {loading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 size={40} className="text-primary-light animate-spin" />
-            </div>
-          ) : error ? (
-            <div className="text-center py-20">
-              <p className="text-danger mb-4">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-2 bg-surface-light hover:bg-surface-lighter text-white rounded-lg transition-colors"
-              >
-                Tentar novamente
-              </button>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="text-center py-20">
-              <ShoppingBag size={64} className="text-surface-lighter mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-white mb-2">Loja vazia</h2>
-              <p className="text-gray-400">Novos itens serao adicionados em breve.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product) => (
-                <StoreProductCard
-                  key={product.id}
-                  product={product}
-                  onBuy={handleBuyProduct}
-                  buying={buyingId === product.id}
-                  userAC={userAC}
-                />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {VIP_PLANS.map((plan) => (
+              <VipPlanCard key={plan.id} plan={plan} onBuy={handleBuyVip} buying={buyingVip === plan.id} />
+            ))}
+          </div>
+
+          <p className="text-xs text-gray-500 mt-6 text-center">
+            Os planos VIP são renovados manualmente. Benefícios ativados imediatamente após a compra.
+          </p>
         </div>
       )}
     </div>

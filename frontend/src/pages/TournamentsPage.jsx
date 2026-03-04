@@ -116,7 +116,7 @@ export default function TournamentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white">Campeonatos</h1>
-          <p className="text-gray-400 mt-1">Participe de competicoes e conquiste premios</p>
+          <p className="text-gray-400 mt-1">Participe de competições e conquiste prêmios</p>
         </div>
         {isAdmin && (
           <Link
@@ -180,7 +180,7 @@ export default function TournamentsPage() {
           <p className="text-gray-400">
             {filterGame || filterStatus
               ? 'Tente ajustar os filtros.'
-              : 'Novos campeonatos serao anunciados em breve.'}
+              : 'Novos campeonatos serão anunciados em breve.'}
           </p>
         </div>
       ) : (

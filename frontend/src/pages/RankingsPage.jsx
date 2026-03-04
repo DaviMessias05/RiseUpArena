@@ -130,8 +130,8 @@ export default function RankingsPage() {
       {games.length === 0 ? (
         <div className="text-center py-20">
           <Gamepad2 size={64} className="text-surface-lighter mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Nenhum jogo disponivel</h2>
-          <p className="text-gray-400">Rankings aparecerao quando houver jogos na plataforma.</p>
+          <h2 className="text-xl font-bold text-white mb-2">Nenhum jogo disponível</h2>
+          <p className="text-gray-400">Rankings aparecerão quando houver jogos na plataforma.</p>
         </div>
       ) : (
         <>
@@ -174,7 +174,7 @@ export default function RankingsPage() {
                   <thead>
                     <tr className="border-b border-surface-light/50 bg-surface-light/30">
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                        Posicao
+                        Posição
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Jogador

@@ -20,7 +20,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import * as api from '../../lib/api';
 
 const TABS = [
-  { id: 'users', label: 'Usuarios', icon: Users },
+  { id: 'users', label: 'Usuários', icon: Users },
   { id: 'games', label: 'Jogos', icon: Gamepad2 },
   { id: 'tournaments', label: 'Campeonatos', icon: Trophy },
   { id: 'store', label: 'Loja', icon: ShoppingBag },
@@ -133,7 +133,7 @@ function UsersTab() {
             <thead>
               <tr className="border-b border-surface-light/50 bg-surface-light/30">
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Usuario
+                  Usuário
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Email
@@ -142,7 +142,7 @@ function UsersTab() {
                   Role
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Acoes
+                  Ações
                 </th>
               </tr>
             </thead>
@@ -201,7 +201,7 @@ function UsersTab() {
           </table>
         </div>
         {filteredUsers.length === 0 && (
-          <div className="p-8 text-center text-gray-400 text-sm">Nenhum usuario encontrado.</div>
+          <div className="p-8 text-center text-gray-400 text-sm">Nenhum usuário encontrado.</div>
         )}
       </div>
     </div>
@@ -294,7 +294,7 @@ function GamesTab() {
     setError(null);
     try {
       await api.deleteGame(game.slug || game.id);
-      setSuccess('Jogo excluido com sucesso.');
+      setSuccess('Jogo excluído com sucesso.');
       await fetchGames();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -353,7 +353,7 @@ function GamesTab() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1">Genero</label>
+              <label className="block text-xs font-medium text-gray-400 mb-1">Gênero</label>
               <input
                 type="text"
                 value={form.genre}
@@ -372,7 +372,7 @@ function GamesTab() {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-gray-400 mb-1">Descricao</label>
+              <label className="block text-xs font-medium text-gray-400 mb-1">Descrição</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -413,10 +413,10 @@ function GamesTab() {
                   Slug
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Genero
+                  Gênero
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Acoes
+                  Ações
                 </th>
               </tr>
             </thead>
@@ -564,7 +564,7 @@ function TournamentsTab() {
     setError(null);
     try {
       await api.deleteTournament(tournament.id);
-      setSuccess('Campeonato excluido com sucesso.');
+      setSuccess('Campeonato excluído com sucesso.');
       await fetchData();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -643,18 +643,18 @@ function TournamentsTab() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1">Premiacao</label>
+              <label className="block text-xs font-medium text-gray-400 mb-1">Premiação</label>
               <input
                 type="text"
                 value={form.prize_pool}
                 onChange={(e) => setForm({ ...form, prize_pool: e.target.value })}
                 className="w-full px-3 py-2 bg-surface-light border border-surface-lighter rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="500 creditos"
+                placeholder="500 créditos"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1">
-                Data de Inicio
+                Data de Início
               </label>
               <input
                 type="datetime-local"
@@ -676,7 +676,7 @@ function TournamentsTab() {
               </select>
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-gray-400 mb-1">Descricao</label>
+              <label className="block text-xs font-medium text-gray-400 mb-1">Descrição</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -723,7 +723,7 @@ function TournamentsTab() {
                   Jogadores
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Acoes
+                  Ações
                 </th>
               </tr>
             </thead>
@@ -866,7 +866,7 @@ function StoreTab() {
     setError(null);
     try {
       await api.deleteStoreProduct(product.id);
-      setSuccess('Produto excluido com sucesso.');
+      setSuccess('Produto excluído com sucesso.');
       await fetchProducts();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -915,7 +915,7 @@ function StoreTab() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1">
-                Preco (creditos)
+                Preço (creditos)
               </label>
               <input
                 type="number"
@@ -936,7 +936,7 @@ function StoreTab() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1">Descricao</label>
+              <label className="block text-xs font-medium text-gray-400 mb-1">Descrição</label>
               <input
                 type="text"
                 value={form.description}
@@ -974,13 +974,13 @@ function StoreTab() {
                   Produto
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Preco
+                  Preço
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Descricao
+                  Descrição
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Acoes
+                  Ações
                 </th>
               </tr>
             </thead>
