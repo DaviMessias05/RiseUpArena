@@ -225,3 +225,7 @@ export function getPlatformStats() {
 export function verifyCaptcha(token, action) {
   return apiPost('/auth/verify-captcha', { token, action })
 }
+
+export function completeProfile(data) {
+  return apiPost('/auth/complete-profile', data)
+}

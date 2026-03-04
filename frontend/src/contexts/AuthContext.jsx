@@ -169,6 +169,11 @@ export function AuthProvider({ children }) {
     return !!user?.email_confirmed_at || profile?.email_verified === true
   }, [user, profile])
 
+  const isProfileComplete = useMemo(() => {
+    if (!profile) return false
+    return !!profile.cpf
+  }, [profile])
+
   const value = useMemo(() => ({
     user,
     profile,
@@ -176,6 +181,7 @@ export function AuthProvider({ children }) {
     loading,
     isAdmin,
     isEmailVerified,
+    isProfileComplete,
     signUp,
     signIn,
     signInWithGoogle,
@@ -189,6 +195,7 @@ export function AuthProvider({ children }) {
     loading,
     isAdmin,
     isEmailVerified,
+    isProfileComplete,
     signUp,
     signIn,
     signInWithGoogle,

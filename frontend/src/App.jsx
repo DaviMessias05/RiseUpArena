@@ -9,6 +9,7 @@ import HomePage from './pages/HomePage'
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'))
 const CallbackPage = lazy(() => import('./pages/auth/CallbackPage'))
+const CompleteProfilePage = lazy(() => import('./pages/auth/CompleteProfilePage'))
 const GamesPage = lazy(() => import('./pages/GamesPage'))
 const GameDetailPage = lazy(() => import('./pages/GameDetailPage'))
 const TournamentsPage = lazy(() => import('./pages/TournamentsPage'))
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/auth/login" element={<LoginPage />} />
             <Route path="/auth/register" element={<RegisterPage />} />
             <Route path="/auth/callback" element={<CallbackPage />} />
+            <Route path="/auth/complete-profile" element={<CompleteProfilePage />} />
             <Route path="/games" element={<GamesPage />} />
             <Route path="/games/:slug" element={<GameDetailPage />} />
             <Route path="/tournaments" element={<TournamentsPage />} />

@@ -151,4 +151,100 @@ router.post('/check-unique', async (req, res) => {
   }
 });
 
+// POST /api/auth/complete-profile — Complete profile after SSO login (CPF, username, display_name)
+router.post('/complete-profile', authenticate, requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { cpf, username, display_name } = req.body;
+
+    if (!cpf || !username) {
+      return res.status(400).json({ error: 'CPF e nome de usuário são obrigatórios.' });
+    }
+
+    const digits = cpf.replace(/\D/g, '');
+
+    // Validar CPF estruturalmente
+    if (!isValidCpfStructure(digits)) {
+      return res.status(400).json({ error: 'CPF inválido.' });
+    }
+
+    // Verificar se o perfil já tem CPF (evitar dupla submissão)
+    const { data: currentProfile } = await supabase
+      .from('profiles')
+      .select('cpf')
+      .eq('id', userId)
+      .single();
+
+    if (currentProfile?.cpf) {
+      return res.status(400).json({ error: 'Perfil já possui CPF cadastrado.' });
+    }
+
+    // Verificar unicidade de CPF e username (excluindo o próprio usuário)
+    const { data: cpfExists } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('cpf', digits)
+      .neq('id', userId)
+      .maybeSingle();
+
+    if (cpfExists) {
+      return res.status(409).json({ error: 'Este CPF já está cadastrado.' });
+    }
+
+    // Validar username
+    if (username.length < 3 || username.length > 20) {
+      return res.status(400).json({ error: 'Nome de usuário deve ter entre 3 e 20 caracteres.' });
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return res.status(400).json({ error: 'Nome de usuário deve conter apenas letras, números e underline.' });
+    }
+
+    const { data: usernameExists } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', username)
+      .neq('id', userId)
+      .maybeSingle();
+
+    if (usernameExists) {
+      return res.status(409).json({ error: 'Este nome de usuário já está em uso.' });
+    }
+
+    // Verificação real de CPF via API externa (se configurado)
+    if (process.env.CPF_API_TOKEN) {
+      try {
+        const response = await fetch(`https://brasilapi.com.br/api/cpf/v1/${digits}`);
+        if (!response.ok) {
+          return res.status(400).json({ error: 'CPF não encontrado na Receita Federal.' });
+        }
+      } catch (apiErr) {
+        console.warn('CPF API verification failed, using structural validation only:', apiErr.message);
+      }
+    }
+
+    // Atualizar perfil
+    const updates = { cpf: digits, username };
+    if (display_name && display_name.trim().length >= 3) {
+      updates.display_name = display_name.trim();
+    }
+
+    const { data: updatedProfile, error: updateError } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Profile update error:', updateError);
+      return res.status(500).json({ error: 'Erro ao atualizar perfil.' });
+    }
+
+    res.json({ success: true, profile: updatedProfile });
+  } catch (err) {
+    console.error('Complete profile error:', err);
+    res.status(500).json({ error: 'Erro ao completar perfil.' });
+  }
+});
+
 module.exports = router;

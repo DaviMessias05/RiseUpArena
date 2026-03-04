@@ -5,9 +5,13 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function CallbackPage() {
-  const { session, loading } = useAuth();
+  const { session, loading, isProfileComplete } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState(null);
+
+  function getRedirectPath() {
+    return isProfileComplete ? '/' : '/auth/complete-profile';
+  }
 
   // Processa o callback OAuth diretamente
   useEffect(() => {
@@ -24,7 +28,7 @@ export default function CallbackPage() {
         }
 
         if (data?.session) {
-          navigate('/', { replace: true });
+          // Aguarda o AuthContext processar o perfil antes de redirecionar
           return;
         }
 
@@ -39,12 +43,12 @@ export default function CallbackPage() {
     handleCallback();
   }, [navigate]);
 
-  // Fallback: se o contexto detectar a sessão
+  // Fallback: se o contexto detectar a sessão e o perfil
   useEffect(() => {
     if (!loading && session) {
-      navigate('/', { replace: true });
+      navigate(getRedirectPath(), { replace: true });
     }
-  }, [session, loading, navigate]);
+  }, [session, loading, isProfileComplete, navigate]);
 
   // Timeout de segurança
   useEffect(() => {
@@ -61,7 +65,7 @@ export default function CallbackPage() {
       <div className="text-center">
         <Loader2 size={48} className="text-primary-light animate-spin mx-auto mb-4" />
         <h1 className="text-xl font-bold text-white mb-2">Autenticando...</h1>
-        <p className="text-gray-400">Estamos verificando sua sessao. Aguarde um momento.</p>
+        <p className="text-gray-400">Estamos verificando sua sessão. Aguarde um momento.</p>
       </div>
     </div>
   );
