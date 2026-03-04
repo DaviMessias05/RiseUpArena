@@ -7,7 +7,7 @@ const NAV_LINKS = [
   { label: 'Campeonatos', to: '/tournaments' },
   { label: 'Lobbies', to: '/lobbies' },
   { label: 'Rankings', to: '/rankings' },
-  { label: 'Loja', to: '/store' },
+  { label: 'VIPs', to: '/vips' },
 ];
 
 export default function Navbar() {
