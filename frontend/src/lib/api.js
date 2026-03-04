@@ -247,3 +247,13 @@ export function verifyCaptcha(token, action) {
 export function completeProfile(data) {
   return apiPost('/auth/complete-profile', data)
 }
+
+// ── VIP ──────────────────────────────────────────────────────────────────────
+
+export function getVipPlans() {
+  return apiGet('/vip/plans')
+}
+
+export function getVipStatus() {
+  return apiGet('/vip/status')
+}

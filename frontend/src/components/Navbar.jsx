@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, Shield, ChevronDown } from 'lucide-react';
+import { Menu, X, User, LogOut, Shield, ChevronDown, Crown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const NAV_LINKS = [
@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { label: 'Lobbies', to: '/lobbies' },
   { label: 'Rankings', to: '/rankings' },
   { label: 'Loja', to: '/store' },
+  { label: 'VIP', to: '/vip', icon: Crown, highlight: true },
 ];
 
 export default function Navbar() {
@@ -62,8 +63,13 @@ export default function Navbar() {
               <Link
                 key={link.to}
                 to={link.to}
-                className="px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-surface-light transition-colors"
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  link.highlight
+                    ? 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10'
+                    : 'text-gray-300 hover:text-white hover:bg-surface-light'
+                }`}
               >
+                {link.icon && <link.icon size={14} />}
                 {link.label}
               </Link>
             ))}

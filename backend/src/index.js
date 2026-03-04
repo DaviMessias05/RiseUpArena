@@ -13,6 +13,7 @@ const storeRouter = require('./routes/store');
 const chatRouter = require('./routes/chat');
 const adminRouter = require('./routes/admin');
 const authRouter = require('./routes/auth');
+const vipRouter = require('./routes/vip');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -78,6 +79,7 @@ app.use('/api/store', storeRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/vip', vipRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

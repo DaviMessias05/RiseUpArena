@@ -21,6 +21,7 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const AdminPage = lazy(() => import('./pages/admin/AdminPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
+const VipPage = lazy(() => import('./pages/VipPage'))
 
 function PageLoader() {
   return (
@@ -62,6 +63,7 @@ export default function App() {
               }
             />
             <Route path="/rankings" element={<RankingsPage />} />
+            <Route path="/vip" element={<VipPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route
