@@ -31,13 +31,17 @@ function RankBadge({ position }) {
   );
 }
 
-function getTierLabel(rating) {
-  if (rating >= 2000) return { label: 'Challenger', color: 'text-yellow-400', bg: 'bg-yellow-400/10' };
-  if (rating >= 1700) return { label: 'Diamond', color: 'text-cyan-400', bg: 'bg-cyan-400/10' };
-  if (rating >= 1400) return { label: 'Platinum', color: 'text-teal-400', bg: 'bg-teal-400/10' };
-  if (rating >= 1100) return { label: 'Gold', color: 'text-yellow-500', bg: 'bg-yellow-500/10' };
-  if (rating >= 800) return { label: 'Silver', color: 'text-gray-300', bg: 'bg-gray-300/10' };
-  return { label: 'Bronze', color: 'text-orange-400', bg: 'bg-orange-400/10' };
+function getLevelInfo(rp) {
+  if (rp >= 3000) return { level: 10, label: 'Nível 10', color: 'text-red-400', bg: 'bg-red-400/10' };
+  if (rp >= 2501) return { level: 9, label: 'Nível 9', color: 'text-yellow-400', bg: 'bg-yellow-400/10' };
+  if (rp >= 2101) return { level: 8, label: 'Nível 8', color: 'text-purple-400', bg: 'bg-purple-400/10' };
+  if (rp >= 1701) return { level: 7, label: 'Nível 7', color: 'text-purple-300', bg: 'bg-purple-300/10' };
+  if (rp >= 1301) return { level: 6, label: 'Nível 6', color: 'text-blue-400', bg: 'bg-blue-400/10' };
+  if (rp >= 901)  return { level: 5, label: 'Nível 5', color: 'text-cyan-400', bg: 'bg-cyan-400/10' };
+  if (rp >= 601)  return { level: 4, label: 'Nível 4', color: 'text-green-400', bg: 'bg-green-400/10' };
+  if (rp >= 301)  return { level: 3, label: 'Nível 3', color: 'text-emerald-400', bg: 'bg-emerald-400/10' };
+  if (rp >= 101)  return { level: 2, label: 'Nível 2', color: 'text-gray-300', bg: 'bg-gray-300/10' };
+  return { level: 1, label: 'Nível 1', color: 'text-gray-400', bg: 'bg-gray-400/10' };
 }
 
 export default function RankingsPage() {
@@ -180,10 +184,10 @@ export default function RankingsPage() {
                         Jogador
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Rating
+                        RP
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Tier
+                        Nível
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         V/D
@@ -195,7 +199,7 @@ export default function RankingsPage() {
                   </thead>
                   <tbody className="divide-y divide-surface-light/30">
                     {rankings.map((player, idx) => {
-                      const tier = getTierLabel(player.rating || 0);
+                      const tier = getLevelInfo(player.rating || 0);
                       const wins = player.wins || 0;
                       const losses = player.losses || 0;
                       const total = wins + losses;

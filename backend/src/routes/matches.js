@@ -66,7 +66,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/matches/:id/result — Record result (admin only), update ELO ratings, update player_stats
+// PUT /api/matches/:id/result — Record result (admin only), update RP rankings, update player_stats
 router.put('/:id/result', authenticate, requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -178,12 +178,27 @@ router.put('/:id/result', authenticate, requireAuth, requireAdmin, async (req, r
         });
     }
 
-    // Update ELO rankings
-    let eloResult = null;
+    // Update RP rankings
+    let rpResult = null;
     try {
-      eloResult = await updateRankings(match.game_id, winner_id, loser_id);
-    } catch (eloErr) {
-      console.error('ELO update error:', eloErr);
+      rpResult = await updateRankings(match.game_id, winner_id, loser_id);
+
+      // Gravar rating_change no match_players
+      if (rpResult) {
+        await supabase
+          .from('match_players')
+          .update({ rating_change: rpResult.winner.change })
+          .eq('match_id', id)
+          .eq('user_id', winner_id);
+
+        await supabase
+          .from('match_players')
+          .update({ rating_change: rpResult.loser.change })
+          .eq('match_id', id)
+          .eq('user_id', loser_id);
+      }
+    } catch (rpErr) {
+      console.error('RP update error:', rpErr);
     }
 
     // If match came from a lobby, update lobby status
@@ -196,7 +211,7 @@ router.put('/:id/result', authenticate, requireAuth, requireAdmin, async (req, r
 
     res.json({
       match: updatedMatch,
-      elo: eloResult,
+      rp: rpResult,
     });
   } catch (err) {
     console.error('Record match result error:', err);

@@ -1,38 +1,36 @@
 const { supabase } = require('./supabase');
 
+const RP_WIN = 25;
+const RP_LOSS = -15;
+
 /**
- * Calculate new ELO ratings for winner and loser.
- * Uses the standard ELO formula with a configurable K-factor.
+ * Retorna o nível (1-10) baseado nos Ranking Points.
  */
-function calculateElo(winnerRating, loserRating, kFactor = 32) {
-  const expectedWinner = 1 / (1 + Math.pow(10, (loserRating - winnerRating) / 400));
-  const expectedLoser = 1 / (1 + Math.pow(10, (winnerRating - loserRating) / 400));
-
-  const newWinnerRating = Math.round(winnerRating + kFactor * (1 - expectedWinner));
-  const newLoserRating = Math.round(loserRating + kFactor * (0 - expectedLoser));
-
-  return { newWinnerRating, newLoserRating };
+function getRpLevel(rp) {
+  if (rp >= 3000) return 10;
+  if (rp >= 2501) return 9;
+  if (rp >= 2101) return 8;
+  if (rp >= 1701) return 7;
+  if (rp >= 1301) return 6;
+  if (rp >= 901) return 5;
+  if (rp >= 601) return 4;
+  if (rp >= 301) return 3;
+  if (rp >= 101) return 2;
+  return 1;
 }
 
 /**
- * Determine the rank tier based on rating.
+ * Retorna o rank_tier string baseado no RP.
  */
-function getRankTier(rating) {
-  if (rating >= 2200) return 'legend';
-  if (rating >= 2000) return 'master';
-  if (rating >= 1800) return 'diamond';
-  if (rating >= 1500) return 'platinum';
-  if (rating >= 1200) return 'gold';
-  if (rating >= 900) return 'silver';
-  return 'bronze';
+function getRankTier(rp) {
+  return `level_${getRpLevel(rp)}`;
 }
 
 /**
- * Full ranking update: fetch current ratings, calculate new ones,
- * and upsert the rankings table for a specific game.
+ * Atualiza rankings após uma partida.
+ * Vencedor: +25 RP, Perdedor: -15 RP (mínimo 0).
  */
 async function updateRankings(gameId, winnerId, loserId, client = supabase) {
-  // Fetch current rankings for both players in this game
   const { data: rankings, error: fetchError } = await client
     .from('rankings')
     .select('*')
@@ -46,8 +44,14 @@ async function updateRankings(gameId, winnerId, loserId, client = supabase) {
   const winnerRanking = rankings.find((r) => r.user_id === winnerId);
   const loserRanking = rankings.find((r) => r.user_id === loserId);
 
-  const winnerCurrentRating = winnerRanking ? winnerRanking.rating : 1000;
-  const loserCurrentRating = loserRanking ? loserRanking.rating : 1000;
+  const winnerCurrentRp = winnerRanking ? winnerRanking.rating : 0;
+  const loserCurrentRp = loserRanking ? loserRanking.rating : 0;
+
+  const newWinnerRp = winnerCurrentRp + RP_WIN;
+  const newLoserRp = Math.max(0, loserCurrentRp + RP_LOSS);
+
+  const winnerChange = RP_WIN;
+  const loserChange = newLoserRp - loserCurrentRp;
 
   const winnerWins = (winnerRanking?.wins || 0) + 1;
   const winnerLosses = winnerRanking?.losses || 0;
@@ -59,19 +63,13 @@ async function updateRankings(gameId, winnerId, loserId, client = supabase) {
   const loserLosses = (loserRanking?.losses || 0) + 1;
   const loserMatches = (loserRanking?.matches_played || 0) + 1;
 
-  const { newWinnerRating, newLoserRating } = calculateElo(winnerCurrentRating, loserCurrentRating);
-
-  const winnerTier = getRankTier(newWinnerRating);
-  const loserTier = getRankTier(newLoserRating);
-
-  // Upsert winner ranking
   const { error: winnerError } = await client
     .from('rankings')
     .upsert({
       user_id: winnerId,
       game_id: gameId,
-      rating: newWinnerRating,
-      rank_tier: winnerTier,
+      rating: newWinnerRp,
+      rank_tier: getRankTier(newWinnerRp),
       wins: winnerWins,
       losses: winnerLosses,
       matches_played: winnerMatches,
@@ -83,14 +81,13 @@ async function updateRankings(gameId, winnerId, loserId, client = supabase) {
     throw new Error(`Failed to update winner ranking: ${winnerError.message}`);
   }
 
-  // Upsert loser ranking
   const { error: loserError } = await client
     .from('rankings')
     .upsert({
       user_id: loserId,
       game_id: gameId,
-      rating: newLoserRating,
-      rank_tier: loserTier,
+      rating: newLoserRp,
+      rank_tier: getRankTier(newLoserRp),
       wins: loserWins,
       losses: loserLosses,
       matches_played: loserMatches,
@@ -103,9 +100,9 @@ async function updateRankings(gameId, winnerId, loserId, client = supabase) {
   }
 
   return {
-    winner: { rating: newWinnerRating, tier: winnerTier },
-    loser: { rating: newLoserRating, tier: loserTier },
+    winner: { rating: newWinnerRp, change: winnerChange, level: getRpLevel(newWinnerRp) },
+    loser: { rating: newLoserRp, change: loserChange, level: getRpLevel(newLoserRp) },
   };
 }
 
-module.exports = { calculateElo, getRankTier, updateRankings };
+module.exports = { getRpLevel, getRankTier, updateRankings, RP_WIN, RP_LOSS };

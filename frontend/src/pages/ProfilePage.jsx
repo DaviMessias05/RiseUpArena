@@ -14,15 +14,20 @@ import {
   Camera,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { VipBadge } from './VipPage';
 import * as api from '../lib/api';
 
-function getTierLabel(rating) {
-  if (rating >= 2000) return { label: 'Challenger', color: 'text-yellow-400' };
-  if (rating >= 1700) return { label: 'Diamond', color: 'text-cyan-400' };
-  if (rating >= 1400) return { label: 'Platinum', color: 'text-teal-400' };
-  if (rating >= 1100) return { label: 'Gold', color: 'text-yellow-500' };
-  if (rating >= 800) return { label: 'Silver', color: 'text-gray-300' };
-  return { label: 'Bronze', color: 'text-orange-400' };
+function getLevelInfo(rp) {
+  if (rp >= 3000) return { level: 10, label: 'Nível 10', color: 'text-red-400' };
+  if (rp >= 2501) return { level: 9, label: 'Nível 9', color: 'text-yellow-400' };
+  if (rp >= 2101) return { level: 8, label: 'Nível 8', color: 'text-purple-400' };
+  if (rp >= 1701) return { level: 7, label: 'Nível 7', color: 'text-purple-300' };
+  if (rp >= 1301) return { level: 6, label: 'Nível 6', color: 'text-blue-400' };
+  if (rp >= 901)  return { level: 5, label: 'Nível 5', color: 'text-cyan-400' };
+  if (rp >= 601)  return { level: 4, label: 'Nível 4', color: 'text-green-400' };
+  if (rp >= 301)  return { level: 3, label: 'Nível 3', color: 'text-emerald-400' };
+  if (rp >= 101)  return { level: 2, label: 'Nível 2', color: 'text-gray-300' };
+  return { level: 1, label: 'Nível 1', color: 'text-gray-400' };
 }
 
 function StatCard({ icon: Icon, label, value, color }) {
@@ -89,7 +94,7 @@ function MatchHistoryRow({ match }) {
               : 'text-gray-400'
           }`}
         >
-          {match.rating_change > 0 ? '+' : ''}{match.rating_change}
+          {match.rating_change > 0 ? '+' : ''}{match.rating_change} RP
         </div>
       )}
     </div>
@@ -245,9 +250,12 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-white">
-                {profileData.display_name || profileData.username}
-              </h1>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-2xl font-bold text-white">
+                  {profileData.display_name || profileData.username}
+                </h1>
+                {profileData.vip_tier && <VipBadge tier={profileData.vip_tier} size="sm" />}
+              </div>
               <p className="text-gray-400">@{profileData.username}</p>
               {profileData.bio && (
                 <p className="text-sm text-gray-300 mt-1">{profileData.bio}</p>
@@ -409,7 +417,7 @@ export default function ProfilePage() {
               const losses = stat.losses || 0;
               const total = wins + losses;
               const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
-              const tier = getTierLabel(stat.rating || 0);
+              const tier = getLevelInfo(stat.rating || 0);
 
               return (
                 <div
@@ -429,7 +437,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
-                      <div className="text-xs text-gray-500">Rating</div>
+                      <div className="text-xs text-gray-500">RP</div>
                       <div className="text-xl font-bold text-white">{stat.rating || 0}</div>
                     </div>
                     <div>
