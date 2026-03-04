@@ -14,6 +14,7 @@ const chatRouter = require('./routes/chat');
 const adminRouter = require('./routes/admin');
 const authRouter = require('./routes/auth');
 const vipRouter = require('./routes/vip');
+const stripeRouter = require('./routes/stripe');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -35,6 +36,9 @@ app.use(cors({
   },
   credentials: true,
 }));
+
+// Stripe webhook needs raw body — mount BEFORE express.json()
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
 // Body parsing with size limit
 app.use(express.json({ limit: '10kb' }));
@@ -80,6 +84,7 @@ app.use('/api/chat', chatRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/vip', vipRouter);
+app.use('/api/stripe', stripeRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

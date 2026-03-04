@@ -6,7 +6,6 @@ import { useAuth } from '../contexts/AuthContext';
 const NAV_LINKS = [
   { label: 'Campeonatos', to: '/tournaments' },
   { label: 'Lobbies', to: '/lobbies' },
-  { label: 'Rankings', to: '/rankings' },
   { label: 'Loja', to: '/store' },
   { label: 'VIP', to: '/vip', icon: Crown, highlight: true },
 ];
