@@ -13,7 +13,7 @@ router.get('/products', async (_req, res) => {
       .order('name', { ascending: true });
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: 'Failed to fetch products.' });
     }
 
     res.json(data);
@@ -49,46 +49,32 @@ router.post('/order', authenticate, requireAuth, requireVerifiedEmail, async (re
 
     const totalCost = product.price_credits * orderQuantity;
 
-    // Fetch user profile to check credits
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('credits')
-      .eq('id', userId)
-      .single();
-
-    if (profileError || !profile) {
-      return res.status(400).json({ error: 'Unable to fetch user profile.' });
-    }
-
-    if (profile.credits < totalCost) {
-      return res.status(400).json({
-        error: 'Insufficient credits.',
-        required: totalCost,
-        available: profile.credits,
-      });
-    }
-
     // Check stock if applicable (-1 means unlimited)
     if (product.stock >= 0 && product.stock < orderQuantity) {
       return res.status(400).json({ error: 'Insufficient stock.' });
     }
 
-    // Deduct credits
-    const { error: creditError } = await supabase
-      .from('profiles')
-      .update({ credits: profile.credits - totalCost })
-      .eq('id', userId);
+    // Atomic credit deduction using RPC to prevent double-spend
+    const { data: deductResult, error: deductError } = await supabase
+      .rpc('deduct_credits', { p_user_id: userId, p_amount: totalCost });
 
-    if (creditError) {
+    if (deductError) {
+      if (deductError.message.includes('Insufficient credits')) {
+        return res.status(400).json({ error: 'Insufficient credits.' });
+      }
       return res.status(500).json({ error: 'Failed to deduct credits.' });
     }
 
-    // Reduce stock if tracked (stock >= 0 means tracked)
+    // Atomic stock deduction if tracked
     if (product.stock >= 0) {
-      await supabase
-        .from('store_products')
-        .update({ stock: product.stock - orderQuantity })
-        .eq('id', product_id);
+      const { error: stockError } = await supabase
+        .rpc('deduct_stock', { p_product_id: product_id, p_amount: orderQuantity });
+
+      if (stockError) {
+        // Refund credits atomically
+        await supabase.rpc('add_credits', { p_user_id: userId, p_amount: totalCost });
+        return res.status(400).json({ error: 'Insufficient stock.' });
+      }
     }
 
     // Create order record
@@ -105,12 +91,11 @@ router.post('/order', authenticate, requireAuth, requireVerifiedEmail, async (re
       .single();
 
     if (orderError) {
-      // Attempt to refund credits on order creation failure
-      await supabase
-        .from('profiles')
-        .update({ credits: profile.credits })
-        .eq('id', userId);
-
+      // Refund credits atomically on order creation failure
+      await supabase.rpc('add_credits', { p_user_id: userId, p_amount: totalCost });
+      if (product.stock >= 0) {
+        await supabase.rpc('add_stock', { p_product_id: product_id, p_amount: orderQuantity });
+      }
       return res.status(500).json({ error: 'Failed to create order.' });
     }
 
@@ -133,7 +118,7 @@ router.get('/orders', authenticate, requireAuth, async (req, res) => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: 'Failed to fetch orders.' });
     }
 
     res.json(data);
@@ -167,7 +152,7 @@ router.post('/products', authenticate, requireAuth, requireAdmin, async (req, re
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to create product.' });
     }
 
     res.status(201).json(data);
@@ -200,7 +185,7 @@ router.put('/products/:id', authenticate, requireAuth, requireAdmin, async (req,
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to update product.' });
     }
 
     if (!data) {

@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
     const { data: tournaments, error } = await query;
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: 'Failed to fetch tournaments.' });
     }
 
     // Fetch participant counts for each tournament
@@ -124,7 +124,7 @@ router.post('/', authenticate, requireAuth, requireAdmin, verifyCaptcha, async (
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to create tournament.' });
     }
 
     res.status(201).json(data);
@@ -189,7 +189,7 @@ router.post('/:id/register', authenticate, requireAuth, async (req, res) => {
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to register for tournament.' });
     }
 
     res.status(201).json(data);
@@ -227,7 +227,7 @@ router.put('/:id', authenticate, requireAuth, requireAdmin, async (req, res) => 
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to update tournament.' });
     }
 
     if (!data) {
@@ -276,7 +276,7 @@ router.post('/:id/matches/:matchId/result', authenticate, requireAuth, requireAd
       .single();
 
     if (updateError) {
-      return res.status(400).json({ error: updateError.message });
+      return res.status(400).json({ error: 'Failed to record match result.' });
     }
 
     // Update match_players results

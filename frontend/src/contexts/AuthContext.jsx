@@ -138,9 +138,19 @@ export function AuthProvider({ children }) {
   const updateProfile = useCallback(async (updates) => {
     if (!user) throw new Error('No authenticated user')
 
+    const ALLOWED_FIELDS = ['display_name', 'bio', 'avatar_url']
+    const safeUpdates = {}
+    for (const key of ALLOWED_FIELDS) {
+      if (updates[key] !== undefined) safeUpdates[key] = updates[key]
+    }
+
+    if (Object.keys(safeUpdates).length === 0) {
+      throw new Error('No valid fields to update')
+    }
+
     const { data, error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update(safeUpdates)
       .eq('id', user.id)
       .select()
       .single()

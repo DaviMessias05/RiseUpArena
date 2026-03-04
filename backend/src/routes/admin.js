@@ -23,13 +23,14 @@ router.get('/users', async (req, res) => {
       .range(from, to);
 
     if (search) {
-      query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%`);
+      const sanitized = search.replace(/[,.()]/g, '');
+      query = query.or(`username.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
     }
 
     const { data, error, count } = await query;
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: 'Failed to query users.' });
     }
 
     res.json({
@@ -68,7 +69,7 @@ router.put('/users/:id/role', async (req, res) => {
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to update user role.' });
     }
 
     if (!data) {

@@ -26,18 +26,38 @@ app.use(cors({
   credentials: true,
 }));
 
-// Body parsing
-app.use(express.json());
+// Body parsing with size limit
+app.use(express.json({ limit: '10kb' }));
 
-// Rate limiting — 100 requests per 15 minutes per IP
-const limiter = rateLimit({
+// Rate limiters
+const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
 });
-app.use(limiter);
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts. Please try again later.' },
+});
+
+const storeLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many purchase attempts. Please try again later.' },
+});
+
+// Apply rate limiters
+app.use('/api/auth', authLimiter);
+app.use('/api/store', storeLimiter);
+app.use('/api', apiLimiter);
 
 // Routes
 app.use('/api/games', gamesRouter);
@@ -64,9 +84,9 @@ app.use((_req, res) => {
 app.use((err, _req, res, _next) => {
   console.error('Unhandled error:', err);
   const statusCode = err.statusCode || 500;
-  const message = process.env.NODE_ENV === 'production'
-    ? 'Internal server error.'
-    : err.message || 'Internal server error.';
+  const message = process.env.NODE_ENV === 'development'
+    ? err.message || 'Internal server error.'
+    : 'Internal server error.';
   res.status(statusCode).json({ error: message });
 });
 

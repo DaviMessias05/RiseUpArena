@@ -76,8 +76,11 @@ export default function RegisterPage() {
     if (username.length > 20) {
       return 'O nome de usuario deve ter no maximo 20 caracteres.';
     }
-    if (password.length < 6) {
-      return 'A senha deve ter pelo menos 6 caracteres.';
+    if (password.length < 8) {
+      return 'A senha deve ter pelo menos 8 caracteres.';
+    }
+    if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+      return 'A senha deve conter pelo menos uma letra e um numero.';
     }
     if (password !== confirmPassword) {
       return 'As senhas nao coincidem.';
@@ -253,7 +256,7 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`${inputClass} pr-12`}
-                  placeholder="Minimo 6 caracteres"
+                  placeholder="Minimo 8 caracteres (letra + numero)"
                 />
                 <button
                   type="button"

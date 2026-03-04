@@ -30,7 +30,7 @@ router.get('/', async (req, res) => {
       .limit(100);
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: 'Failed to fetch rankings.' });
     }
 
     res.json({

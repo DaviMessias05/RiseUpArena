@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
     const { data, error } = await query;
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: 'Failed to fetch matches.' });
     }
 
     // If user_id filter, post-filter matches that include this user
@@ -104,7 +104,7 @@ router.put('/:id/result', authenticate, requireAuth, requireAdmin, async (req, r
       .single();
 
     if (updateError) {
-      return res.status(400).json({ error: updateError.message });
+      return res.status(400).json({ error: 'Failed to record match result.' });
     }
 
     // Update match_players results

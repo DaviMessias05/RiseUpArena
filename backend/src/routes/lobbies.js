@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
     const { data, error } = await query;
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: 'Failed to fetch lobbies.' });
     }
 
     res.json(data);
@@ -90,7 +90,7 @@ router.post('/', authenticate, requireAuth, requireVerifiedEmail, verifyCaptcha,
       .single();
 
     if (lobbyError) {
-      return res.status(400).json({ error: lobbyError.message });
+      return res.status(400).json({ error: 'Failed to create lobby.' });
     }
 
     // Auto-join the creator as a player on team 1
@@ -179,7 +179,7 @@ router.post('/:id/join', authenticate, requireAuth, async (req, res) => {
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to join lobby.' });
     }
 
     res.status(201).json(data);
@@ -202,7 +202,7 @@ router.post('/:id/leave', authenticate, requireAuth, async (req, res) => {
       .eq('user_id', userId);
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to leave lobby.' });
     }
 
     res.json({ message: 'Left the lobby successfully.' });
@@ -239,7 +239,7 @@ router.post('/:id/ready', authenticate, requireAuth, async (req, res) => {
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to toggle ready status.' });
     }
 
     res.json(data);
@@ -281,7 +281,7 @@ router.post('/:id/team', authenticate, requireAuth, async (req, res) => {
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to switch team.' });
     }
 
     res.json(data);
@@ -344,7 +344,7 @@ router.post('/:id/start', authenticate, requireAuth, async (req, res) => {
       .single();
 
     if (matchError) {
-      return res.status(500).json({ error: matchError.message });
+      return res.status(500).json({ error: 'Failed to start match.' });
     }
 
     // Create match_players entries from lobby players

@@ -29,7 +29,7 @@ router.get('/messages', async (req, res) => {
     const { data, error } = await query;
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: 'Failed to fetch messages.' });
     }
 
     // Return in chronological order
@@ -50,8 +50,8 @@ router.post('/messages', authenticate, requireAuth, requireVerifiedEmail, async 
       return res.status(400).json({ error: 'channel_type, channel_id, and content are required.' });
     }
 
-    if (content.length > 2000) {
-      return res.status(400).json({ error: 'Message content must be 2000 characters or fewer.' });
+    if (content.length > 1000) {
+      return res.status(400).json({ error: 'Message content must be 1000 characters or fewer.' });
     }
 
     const { data, error } = await supabase
@@ -66,7 +66,7 @@ router.post('/messages', authenticate, requireAuth, requireVerifiedEmail, async 
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to send message.' });
     }
 
     res.status(201).json(data);

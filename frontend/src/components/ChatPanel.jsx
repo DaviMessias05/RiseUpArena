@@ -143,6 +143,7 @@ export default function ChatPanel({ channelType, channelId }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
+            maxLength={1000}
             className="flex-1 bg-surface-light text-sm text-gray-200 placeholder-gray-500 px-3 py-2 rounded-lg border border-surface-lighter focus:outline-none focus:border-primary-light transition-colors"
             disabled={sending}
           />

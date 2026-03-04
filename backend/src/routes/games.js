@@ -13,7 +13,7 @@ router.get('/', async (_req, res) => {
       .order('name', { ascending: true });
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: 'Failed to fetch games.' });
     }
 
     res.json(data);
@@ -94,7 +94,7 @@ router.post('/', authenticate, requireAuth, requireAdmin, async (req, res) => {
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to create game.' });
     }
 
     res.status(201).json(data);
@@ -126,7 +126,7 @@ router.put('/:id', authenticate, requireAuth, requireAdmin, async (req, res) => 
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: 'Failed to update game.' });
     }
 
     if (!data) {

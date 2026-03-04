@@ -33,7 +33,6 @@ async function verifyCaptcha(req, res, next) {
     if (!data.success || data.score < 0.5) {
       return res.status(403).json({
         error: 'CAPTCHA verification failed.',
-        score: data.score || null,
       });
     }
 
