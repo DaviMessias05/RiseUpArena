@@ -33,6 +33,9 @@ export async function fetchTournaments() {
     ...t,
     game_name: t.games?.name || 'Jogo',
     game_slug: t.games?.slug,
+    prize_pool: t.prize_description || t.prize_pool,
+    max_players: t.max_participants || t.max_players,
+    current_players: t.current_participants || t.current_players || 0,
   }))
 }
 

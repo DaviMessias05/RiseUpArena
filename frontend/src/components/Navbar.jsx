@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, Shield, ChevronDown, Crown } from 'lucide-react';
+import { Menu, X, User, LogOut, Shield, ChevronDown, Crown, Coins } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const NAV_LINKS = [
   { label: 'Campeonatos', to: '/tournaments' },
-  { label: 'Lobbies', to: '/lobbies' },
   { label: 'Loja', to: '/store' },
   { label: 'VIP', to: '/vip', icon: Crown, highlight: true },
 ];
@@ -40,7 +39,8 @@ export default function Navbar() {
   };
 
   const displayName = profile?.username || profile?.display_name || 'Jogador';
-  const avatarUrl = profile?.avatar_url;
+  const userRC = profile?.rise_coins || 0;
+  const userAC = profile?.arena_coins || 0;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-surface-light/50">
@@ -80,22 +80,18 @@ export default function Navbar() {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen((prev) => !prev)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-light transition-colors"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-surface-light transition-colors"
                 >
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={displayName}
-                      className="w-8 h-8 rounded-full object-cover border-2 border-primary-light"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f28c38] to-[#e8611a] flex items-center justify-center">
-                      <User size={16} className="text-white" />
-                    </div>
-                  )}
-                  <span className="text-sm font-medium text-gray-200">
-                    {displayName}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <Coins size={14} className="text-accent" />
+                    <span className="text-sm font-bold text-accent">{userRC.toLocaleString('pt-BR')}</span>
+                    <span className="text-[10px] text-gray-500 font-medium">RC</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Coins size={14} className="text-emerald-400" />
+                    <span className="text-sm font-bold text-emerald-400">{userAC.toLocaleString('pt-BR')}</span>
+                    <span className="text-[10px] text-gray-500 font-medium">AC</span>
+                  </div>
                   <ChevronDown
                     size={16}
                     className={`text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
@@ -180,21 +176,17 @@ export default function Navbar() {
 
             {user ? (
               <>
-                <div className="flex items-center gap-2 px-3 py-2">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={displayName}
-                      className="w-8 h-8 rounded-full object-cover border-2 border-primary-light"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f28c38] to-[#e8611a] flex items-center justify-center">
-                      <User size={16} className="text-white" />
-                    </div>
-                  )}
-                  <span className="text-sm font-medium text-gray-200">
-                    {displayName}
-                  </span>
+                <div className="flex items-center gap-4 px-3 py-2">
+                  <div className="flex items-center gap-1.5">
+                    <Coins size={14} className="text-accent" />
+                    <span className="text-sm font-bold text-accent">{userRC.toLocaleString('pt-BR')}</span>
+                    <span className="text-[10px] text-gray-500 font-medium">RC</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Coins size={14} className="text-emerald-400" />
+                    <span className="text-sm font-bold text-emerald-400">{userAC.toLocaleString('pt-BR')}</span>
+                    <span className="text-[10px] text-gray-500 font-medium">AC</span>
+                  </div>
                 </div>
                 <Link
                   to="/profile"

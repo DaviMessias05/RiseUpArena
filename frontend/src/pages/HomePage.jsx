@@ -1,43 +1,45 @@
 import { Link } from 'react-router-dom';
-import { Gamepad2, Trophy, Users, Swords, ArrowRight, Loader2 } from 'lucide-react';
+import { Trophy, Users, Swords, ArrowRight, Loader2, Lock, Target, Flame, Medal, Star, Crown, Zap, Award } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCachedData } from '../hooks/useCache';
-import { fetchGames, fetchTournaments, fetchPlatformStats } from '../lib/fetchers';
+import { fetchTournaments, fetchPlatformStats } from '../lib/fetchers';
 
-function GameCard({ game }) {
+const ACHIEVEMENTS = [
+  { id: 1, name: 'Primeira Vitória', description: 'Vença sua primeira partida', icon: Trophy, color: 'from-green-500 to-emerald-600', rarity: 'Comum' },
+  { id: 2, name: 'Sequência de 5', description: 'Vença 5 partidas seguidas', icon: Flame, color: 'from-orange-500 to-red-600', rarity: 'Raro' },
+  { id: 3, name: 'Veterano', description: 'Jogue 100 partidas', icon: Medal, color: 'from-blue-500 to-blue-700', rarity: 'Raro' },
+  { id: 4, name: 'Campeão', description: 'Vença um campeonato', icon: Crown, color: 'from-yellow-500 to-amber-600', rarity: 'Épico' },
+  { id: 5, name: 'Imbatível', description: 'Vença 10 partidas seguidas', icon: Zap, color: 'from-purple-500 to-purple-700', rarity: 'Épico' },
+  { id: 6, name: 'Lenda', description: 'Alcance o Nível 10 no ranking', icon: Star, color: 'from-red-500 to-rose-700', rarity: 'Lendário' },
+  { id: 7, name: 'Precisão Mortal', description: 'Win rate acima de 80% em 20+ partidas', icon: Target, color: 'from-cyan-500 to-teal-600', rarity: 'Épico' },
+  { id: 8, name: 'Elite', description: 'Fique no top 3 do ranking', icon: Award, color: 'from-amber-400 to-yellow-600', rarity: 'Lendário' },
+];
+
+const RARITY_COLORS = {
+  'Comum': 'text-gray-400 bg-gray-400/10',
+  'Raro': 'text-blue-400 bg-blue-400/10',
+  'Épico': 'text-purple-400 bg-purple-400/10',
+  'Lendário': 'text-yellow-400 bg-yellow-400/10',
+};
+
+function AchievementCard({ achievement }) {
+  const Icon = achievement.icon;
+  const rarityClass = RARITY_COLORS[achievement.rarity] || 'text-gray-400 bg-gray-400/10';
+
   return (
-    <Link
-      to={`/games/${game.slug}`}
-      className="group bg-surface rounded-xl overflow-hidden border border-surface-light/50 hover:border-primary/50 transition-all duration-300 hover:-translate-y-1"
-    >
-      <div className="aspect-video bg-surface-light relative overflow-hidden">
-        {game.banner_url ? (
-          <img
-            src={game.banner_url}
-            alt={game.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Gamepad2 size={48} className="text-surface-lighter" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="absolute bottom-3 left-3">
-          <span className="px-2 py-1 bg-primary/80 text-white text-xs font-semibold rounded">
-            {game.genre || 'Esports'}
-          </span>
-        </div>
+    <div className="bg-surface rounded-xl border border-surface-light/50 p-4 relative overflow-hidden opacity-60 grayscale hover:opacity-80 hover:grayscale-[50%] transition-all duration-300">
+      <div className="absolute top-3 right-3">
+        <Lock size={14} className="text-gray-500" />
       </div>
-      <div className="p-4">
-        <h3 className="text-lg font-bold text-white group-hover:text-primary-light transition-colors">
-          {game.name}
-        </h3>
-        <p className="text-sm text-gray-400 mt-1 line-clamp-2">
-          {game.description || 'Compete agora neste jogo!'}
-        </p>
+      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${achievement.color} flex items-center justify-center mb-3 opacity-50`}>
+        <Icon size={24} className="text-white" />
       </div>
-    </Link>
+      <h4 className="font-bold text-white text-sm">{achievement.name}</h4>
+      <p className="text-xs text-gray-500 mt-1">{achievement.description}</p>
+      <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-semibold ${rarityClass}`}>
+        {achievement.rarity}
+      </span>
+    </div>
   );
 }
 
@@ -96,12 +98,10 @@ function StatBlock({ icon: Icon, value, label }) {
 
 export default function HomePage() {
   const { user } = useAuth();
-  const { data: games, loading: gamesLoading } = useCachedData('games', fetchGames);
   const { data: tournaments, loading: tournamentsLoading } = useCachedData('tournaments', fetchTournaments);
   const { data: stats } = useCachedData('platform_stats', fetchPlatformStats);
 
-  const loading = gamesLoading || tournamentsLoading;
-  const displayGames = (games || []).slice(0, 3);
+  const loading = tournamentsLoading;
   const displayTournaments = (tournaments || []).slice(0, 4);
   const displayStats = stats || { users: 0, matches: 0, tournaments: 0 };
 
@@ -124,24 +124,24 @@ export default function HomePage() {
               Plataforma competitiva de esports
             </p>
             <p className="mt-2 text-gray-500 max-w-xl mx-auto">
-              Participe de lobbies, campeonatos e suba no ranking. Prove que você é o melhor.
+              Participe de campeonatos e suba no ranking. Prove que você é o melhor.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               {user ? (
                 <>
                   <Link
-                    to="/lobbies"
-                    className="px-8 py-3 bg-gradient-to-r from-[#f28c38] to-[#e8611a] hover:from-[#f59e0b] hover:to-[#f28c38] text-white font-bold rounded-xl transition-all shadow-lg shadow-[#e8611a]/25 flex items-center gap-2"
-                  >
-                    <Swords size={20} />
-                    Entrar em um Lobby
-                  </Link>
-                  <Link
                     to="/tournaments"
-                    className="px-8 py-3 bg-surface-light hover:bg-surface-lighter text-white font-bold rounded-xl border border-surface-lighter transition-colors flex items-center gap-2"
+                    className="px-8 py-3 bg-gradient-to-r from-[#f28c38] to-[#e8611a] hover:from-[#f59e0b] hover:to-[#f28c38] text-white font-bold rounded-xl transition-all shadow-lg shadow-[#e8611a]/25 flex items-center gap-2"
                   >
                     <Trophy size={20} />
                     Ver Campeonatos
+                  </Link>
+                  <Link
+                    to="/rankings"
+                    className="px-8 py-3 bg-surface-light hover:bg-surface-lighter text-white font-bold rounded-xl border border-surface-lighter transition-colors flex items-center gap-2"
+                  >
+                    <Swords size={20} />
+                    Rankings
                   </Link>
                 </>
               ) : (
@@ -177,47 +177,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Games Section */}
+      {/* Achievements Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-bold text-white">Jogos em Destaque</h2>
-              <p className="text-gray-400 mt-1">Escolha seu jogo e comece a competir</p>
-            </div>
-            <Link
-              to="/games"
-              className="hidden sm:flex items-center gap-1 text-primary-light hover:text-primary font-medium transition-colors"
-            >
-              Ver todos
-              <ArrowRight size={18} />
-            </Link>
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-white">Conquistas</h2>
+            <p className="text-gray-400 mt-1">Desbloqueie conquistas jogando na plataforma</p>
           </div>
-
-          {loading ? (
-            <div className="flex justify-center py-16">
-              <Loader2 size={32} className="text-primary-light animate-spin" />
-            </div>
-          ) : displayGames.length === 0 ? (
-            <div className="text-center py-16">
-              <Gamepad2 size={48} className="text-surface-lighter mx-auto mb-4" />
-              <p className="text-gray-400">Nenhum jogo disponível no momento.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayGames.map((game) => (
-                <GameCard key={game.id || game.slug} game={game} />
-              ))}
-            </div>
-          )}
-
-          <div className="sm:hidden mt-6 text-center">
-            <Link
-              to="/games"
-              className="text-primary-light hover:text-primary font-medium transition-colors"
-            >
-              Ver todos os jogos
-            </Link>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {ACHIEVEMENTS.map((a) => (
+              <AchievementCard key={a.id} achievement={a} />
+            ))}
           </div>
         </div>
       </section>
