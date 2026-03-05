@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Users, Loader2, Filter, Plus, Calendar, Gamepad2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import * as api from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Todos os status' },
@@ -85,15 +85,23 @@ export default function TournamentsPage() {
 
     async function fetchData() {
       try {
-        const [tournamentsData, gamesData] = await Promise.all([
-          api.getTournaments(),
-          api.getGames(),
+        const [{ data: tournamentsData, error: tErr }, { data: gamesData, error: gErr }] = await Promise.all([
+          supabase.from('tournaments').select('*, games(name, slug)').order('created_at', { ascending: false }),
+          supabase.from('games').select('*').eq('is_active', true).order('name'),
         ]);
 
+        if (tErr) throw tErr;
+        if (gErr) throw gErr;
         if (cancelled) return;
 
-        setTournaments(Array.isArray(tournamentsData) ? tournamentsData : []);
-        setGames(Array.isArray(gamesData) ? gamesData : []);
+        const mapped = (tournamentsData || []).map(t => ({
+          ...t,
+          game_name: t.games?.name || 'Jogo',
+          game_slug: t.games?.slug,
+        }));
+
+        setTournaments(mapped);
+        setGames(gamesData || []);
       } catch (err) {
         if (!cancelled) setError(err.message);
       } finally {

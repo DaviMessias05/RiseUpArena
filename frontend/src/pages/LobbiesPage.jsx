@@ -15,6 +15,7 @@ import {
   Play,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import * as api from '../lib/api';
 
 const STATUS_OPTIONS = [
@@ -109,8 +110,19 @@ export default function LobbiesPage() {
 
   const fetchLobbies = useCallback(async () => {
     try {
-      const data = await api.getLobbies();
-      setLobbies(Array.isArray(data) ? data : []);
+      const { data, error: err } = await supabase
+        .from('lobbies')
+        .select('*, games(name, slug)')
+        .in('status', ['waiting', 'ready'])
+        .order('created_at', { ascending: false });
+
+      if (err) throw err;
+      const mapped = (data || []).map(l => ({
+        ...l,
+        game_name: l.games?.name || 'Jogo',
+        game_slug: l.games?.slug,
+      }));
+      setLobbies(mapped);
     } catch (err) {
       setError(err.message);
     }
@@ -121,15 +133,27 @@ export default function LobbiesPage() {
 
     async function fetchData() {
       try {
-        const [lobbiesData, gamesData] = await Promise.all([
-          api.getLobbies(),
-          api.getGames(),
+        const [{ data: lobbiesData, error: lErr }, { data: gamesData, error: gErr }] = await Promise.all([
+          supabase
+            .from('lobbies')
+            .select('*, games(name, slug)')
+            .in('status', ['waiting', 'ready'])
+            .order('created_at', { ascending: false }),
+          supabase.from('games').select('*').eq('is_active', true).order('name'),
         ]);
 
+        if (lErr) throw lErr;
+        if (gErr) throw gErr;
         if (cancelled) return;
 
-        setLobbies(Array.isArray(lobbiesData) ? lobbiesData : []);
-        setGames(Array.isArray(gamesData) ? gamesData : []);
+        const mapped = (lobbiesData || []).map(l => ({
+          ...l,
+          game_name: l.games?.name || 'Jogo',
+          game_slug: l.games?.slug,
+        }));
+
+        setLobbies(mapped);
+        setGames(gamesData || []);
       } catch (err) {
         if (!cancelled) setError(err.message);
       } finally {
