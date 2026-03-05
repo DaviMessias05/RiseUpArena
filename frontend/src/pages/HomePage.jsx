@@ -88,18 +88,18 @@ function TournamentCard({ tournament }) {
             <Trophy size={40} className="text-surface-lighter" />
           </div>
         )}
+        {tournament.start_date && (
+          <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
+            <Clock size={10} className="text-gray-300" />
+            <span className="text-[10px] text-gray-200 font-medium">{formatTournamentDate(tournament.start_date)}</span>
+          </div>
+        )}
         <div className="absolute bottom-2 left-2 w-7 h-7 rounded-lg bg-surface/80 backdrop-blur-sm flex items-center justify-center border border-surface-light/50">
           <Gamepad2 size={14} className="text-gray-300" />
         </div>
       </div>
 
       <div className="p-3">
-        {tournament.start_date && (
-          <p className="text-[11px] text-gray-500 font-medium flex items-center gap-1 mb-1">
-            <Clock size={11} />
-            {formatTournamentDate(tournament.start_date)}
-          </p>
-        )}
         <h4 className="font-bold text-white text-sm truncate">{tournament.name}</h4>
         <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1.5">
           <span>{tournament.game_name || 'Jogo'}</span>

@@ -53,6 +53,12 @@ function TournamentCard({ tournament }) {
             <Trophy size={48} className="text-surface-lighter" />
           </div>
         )}
+        {tournament.start_date && (
+          <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
+            <Clock size={10} className="text-gray-300" />
+            <span className="text-[10px] text-gray-200 font-medium">{formatTournamentDate(tournament.start_date)}</span>
+          </div>
+        )}
         {/* Game icon overlay */}
         <div className="absolute bottom-3 left-3 w-8 h-8 rounded-lg bg-surface/80 backdrop-blur-sm flex items-center justify-center border border-surface-light/50">
           <Gamepad2 size={16} className="text-gray-300" />
@@ -61,14 +67,6 @@ function TournamentCard({ tournament }) {
 
       {/* Info */}
       <div className="p-4">
-        {/* Date */}
-        {tournament.start_date && (
-          <p className="text-xs text-gray-500 font-medium flex items-center gap-1 mb-1.5">
-            <Clock size={12} />
-            {formatTournamentDate(tournament.start_date)}
-          </p>
-        )}
-
         {/* Name */}
         <h3 className="text-base font-bold text-white truncate">{tournament.name}</h3>
 
