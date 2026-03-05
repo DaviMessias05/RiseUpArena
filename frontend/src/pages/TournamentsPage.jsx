@@ -54,9 +54,21 @@ function TournamentCard({ tournament }) {
           </div>
         )}
         {tournament.start_date && (
-          <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
-            <Clock size={10} className="text-gray-300" />
-            <span className="text-[10px] text-gray-200 font-medium">{formatTournamentDate(tournament.start_date)}</span>
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            <div className="flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
+              <Clock size={10} className="text-gray-300" />
+              <span className="text-[10px] text-gray-200 font-medium">{formatTournamentDate(tournament.start_date)}</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
+              <span className="text-[10px] text-gray-400">Nível</span>
+              <span className="text-[10px] text-white font-semibold">{tournament.min_level ?? 1} → {tournament.max_level ?? 10}</span>
+            </div>
+          </div>
+        )}
+        {tournament.prize_pool && (
+          <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
+            <span className="text-[10px] text-gray-400">Premiação: </span>
+            <span className="text-[10px] text-yellow-400 font-semibold">{tournament.prize_pool}</span>
           </div>
         )}
         {/* Game icon overlay */}
