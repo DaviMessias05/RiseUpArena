@@ -85,7 +85,7 @@ function PrizeOverlay({ prize }) {
   return (
     <div className="absolute top-2 right-2">
       <div className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
-        <span className="text-[10px] text-gray-400">1º lugar: </span>
+        <span className="text-[10px] text-gray-400">Premiação: </span>
         <span className="text-[10px] text-yellow-400 font-semibold">{display}</span>
       </div>
     </div>
