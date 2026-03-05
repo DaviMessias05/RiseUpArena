@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Coins,
   AlertCircle,
@@ -76,7 +76,7 @@ function formatNumber(n) {
   return n.toLocaleString('pt-BR');
 }
 
-function RCPackageCard({ pkg }) {
+function RCPackageCard({ pkg, user }) {
   const Icon = pkg.icon;
   const pricePerRC = ((pkg.price / pkg.rc) * 1000).toFixed(2);
 
@@ -98,14 +98,23 @@ function RCPackageCard({ pkg }) {
         </div>
         <p className="text-xs text-gray-500 mt-1">R$ {pricePerRC} por 1.000 RC</p>
         <div className="mt-auto pt-5">
-          <a
-            href={PAYMENT_LINKS[pkg.id]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`w-full py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 bg-gradient-to-r ${pkg.color} hover:opacity-90 text-white shadow-lg ${pkg.shadow}`}
-          >
-            R$ {pkg.price}
-          </a>
+          {user ? (
+            <a
+              href={PAYMENT_LINKS[pkg.id]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`w-full py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 bg-gradient-to-r ${pkg.color} hover:opacity-90 text-white shadow-lg ${pkg.shadow}`}
+            >
+              R$ {pkg.price}
+            </a>
+          ) : (
+            <Link
+              to="/auth/login"
+              className="w-full py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 bg-surface-light hover:bg-surface-lighter text-gray-400 border border-surface-lighter"
+            >
+              Faça login para comprar
+            </Link>
+          )}
         </div>
       </div>
     </div>
@@ -122,12 +131,12 @@ export default function StorePage() {
   const successType = params.get('success');
 
   return (
-    <div className="h-[calc(100vh-5rem)] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col overflow-hidden">
+    <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white">Loja</h1>
-          <p className="text-gray-400 text-sm mt-0.5">Adquira Rise Coins para participar de partidas e eventos</p>
+          <h1 className="text-3xl font-bold text-white">Loja</h1>
+          <p className="text-gray-400 mt-1">Adquira Rise Coins para participar de partidas e eventos</p>
         </div>
         {user && (
           <div className="flex items-center gap-4">
@@ -154,38 +163,39 @@ export default function StorePage() {
       )}
 
       {/* Info section */}
-      <div className="bg-surface rounded-xl border border-surface-light/50 p-4 mb-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
-              <Coins size={16} className="text-accent" />
+      <div className="bg-surface rounded-2xl border border-surface-light/50 p-6 mb-8">
+        <h2 className="text-lg font-bold text-white mb-3">Como funciona?</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
+              <Coins size={20} className="text-accent" />
             </div>
             <div>
               <h3 className="font-semibold text-white text-sm">Rise Coins (RC)</h3>
-              <p className="text-xs text-gray-400">Moeda premium. Use para partidas, eventos e campeonatos.</p>
+              <p className="text-xs text-gray-400 mt-0.5">Moeda premium comprada com dinheiro real. Use para participar de partidas, eventos e campeonatos.</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-              <Coins size={16} className="text-emerald-400" />
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <Coins size={20} className="text-emerald-400" />
             </div>
             <div>
               <h3 className="font-semibold text-white text-sm">Arena Coins (AC)</h3>
-              <p className="text-xs text-gray-400">Moeda ganha jogando. Vitórias, eventos e conquistas.</p>
+              <p className="text-xs text-gray-400 mt-0.5">Moeda ganha jogando. Receba por vitórias, participação em eventos, desafios e conquistas.</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Packages grid */}
-      <h2 className="text-lg font-bold text-white mb-3">Pacotes de Rise Coins</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 flex-1 min-h-0">
+      <h2 className="text-xl font-bold text-white mb-4">Pacotes de Rise Coins</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
         {RC_PACKAGES.map((pkg) => (
-          <RCPackageCard key={pkg.id} pkg={pkg} />
+          <RCPackageCard key={pkg.id} pkg={pkg} user={user} />
         ))}
       </div>
 
-      <p className="text-xs text-gray-500 mt-3 text-center flex-shrink-0">
+      <p className="text-xs text-gray-500 mt-6 text-center">
         Pagamento seguro via Stripe. Após a confirmação, o saldo de Rise Coins é atualizado automaticamente.
       </p>
     </div>

@@ -80,6 +80,22 @@ export async function fetchRankings(gameSlug) {
   }))
 }
 
+export async function fetchUserRankings(userId) {
+  const { data, error } = await supabase
+    .from('rankings')
+    .select('*, games(name, slug, banner_url)')
+    .eq('user_id', userId)
+    .order('rating', { ascending: false })
+
+  if (error) throw error
+  return (data || []).map(r => ({
+    ...r,
+    game_name: r.games?.name || 'Jogo',
+    game_slug: r.games?.slug,
+    game_banner: r.games?.banner_url,
+  }))
+}
+
 export async function fetchPlatformStats() {
   const [
     { count: users },

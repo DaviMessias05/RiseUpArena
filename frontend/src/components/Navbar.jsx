@@ -82,6 +82,8 @@ export default function Navbar() {
                   onClick={() => setDropdownOpen((prev) => !prev)}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-surface-light transition-colors"
                 >
+                  <span className="text-sm font-medium text-gray-200">{displayName}</span>
+                  <div className="w-px h-4 bg-surface-lighter" />
                   <div className="flex items-center gap-1.5">
                     <Coins size={14} className="text-accent" />
                     <span className="text-sm font-bold text-accent">{userRC.toLocaleString('pt-BR')}</span>
@@ -176,16 +178,19 @@ export default function Navbar() {
 
             {user ? (
               <>
-                <div className="flex items-center gap-4 px-3 py-2">
-                  <div className="flex items-center gap-1.5">
-                    <Coins size={14} className="text-accent" />
-                    <span className="text-sm font-bold text-accent">{userRC.toLocaleString('pt-BR')}</span>
-                    <span className="text-[10px] text-gray-500 font-medium">RC</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Coins size={14} className="text-emerald-400" />
-                    <span className="text-sm font-bold text-emerald-400">{userAC.toLocaleString('pt-BR')}</span>
-                    <span className="text-[10px] text-gray-500 font-medium">AC</span>
+                <div className="px-3 py-2">
+                  <span className="text-sm font-medium text-gray-200 block mb-2">{displayName}</span>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <Coins size={14} className="text-accent" />
+                      <span className="text-sm font-bold text-accent">{userRC.toLocaleString('pt-BR')}</span>
+                      <span className="text-[10px] text-gray-500 font-medium">RC</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Coins size={14} className="text-emerald-400" />
+                      <span className="text-sm font-bold text-emerald-400">{userAC.toLocaleString('pt-BR')}</span>
+                      <span className="text-[10px] text-gray-500 font-medium">AC</span>
+                    </div>
                   </div>
                 </div>
                 <Link

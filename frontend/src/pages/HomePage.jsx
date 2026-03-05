@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Trophy, Users, Swords, ArrowRight, Loader2, Lock, Target, Flame, Medal, Star, Crown, Zap, Award } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Trophy, Users, Swords, ArrowRight, Loader2, Lock, Target, Flame, Medal, Star, Crown, Zap, Award, Gamepad2, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCachedData } from '../hooks/useCache';
-import { fetchTournaments, fetchPlatformStats } from '../lib/fetchers';
+import { fetchTournaments, fetchUserRankings, fetchGames } from '../lib/fetchers';
 
 const ACHIEVEMENTS = [
   { id: 1, name: 'Primeira Vitória', description: 'Vença sua primeira partida', icon: Trophy, color: 'from-green-500 to-emerald-600', rarity: 'Comum' },
@@ -43,55 +44,133 @@ function AchievementCard({ achievement }) {
   );
 }
 
+const STATUS_COLORS = {
+  open: 'bg-success',
+  in_progress: 'bg-warning',
+  finished: 'bg-gray-500',
+};
+
+const STATUS_LABELS = {
+  open: 'Aberto',
+  in_progress: 'Em andamento',
+  finished: 'Finalizado',
+};
+
+const FORMAT_LABELS = {
+  single_elimination: 'Eliminação simples',
+  double_elimination: 'Eliminação dupla',
+};
+
+function formatTournamentDate(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  const day = d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+  const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return `${day}, ${time}`;
+}
+
 function TournamentCard({ tournament }) {
-  const statusColors = {
-    open: 'bg-success',
-    in_progress: 'bg-warning',
-    finished: 'bg-gray-500',
-  };
-
-  const statusLabels = {
-    open: 'Aberto',
-    in_progress: 'Em andamento',
-    finished: 'Finalizado',
-  };
-
   return (
     <Link
-      to={`/tournaments`}
-      className="bg-surface rounded-xl p-4 border border-surface-light/50 hover:border-primary/50 transition-all duration-300"
+      to="/tournaments"
+      className="bg-surface rounded-xl border border-surface-light/50 hover:border-primary/50 transition-all duration-300 overflow-hidden block"
     >
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-bold text-white">{tournament.name}</h4>
-        <span
-          className={`px-2 py-0.5 text-xs font-semibold rounded text-white ${
-            statusColors[tournament.status] || 'bg-gray-500'
-          }`}
-        >
-          {statusLabels[tournament.status] || tournament.status}
-        </span>
+      {/* Banner */}
+      <div className="relative aspect-[16/9] bg-surface-light overflow-hidden">
+        {tournament.banner_url ? (
+          <img
+            src={tournament.banner_url}
+            alt={tournament.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-surface-light to-surface">
+            <Trophy size={40} className="text-surface-lighter" />
+          </div>
+        )}
+        <div className="absolute bottom-2 left-2 w-7 h-7 rounded-lg bg-surface/80 backdrop-blur-sm flex items-center justify-center border border-surface-light/50">
+          <Gamepad2 size={14} className="text-gray-300" />
+        </div>
       </div>
-      <p className="text-sm text-gray-400">{tournament.game_name || 'Campeonato'}</p>
-      <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-        <span className="flex items-center gap-1">
-          <Users size={14} />
-          {tournament.max_players || '?'} jogadores
-        </span>
-        <span className="flex items-center gap-1">
-          <Trophy size={14} />
-          {tournament.prize_pool || 'A definir'}
-        </span>
+
+      <div className="p-3">
+        {tournament.start_date && (
+          <p className="text-[11px] text-gray-500 font-medium flex items-center gap-1 mb-1">
+            <Clock size={11} />
+            {formatTournamentDate(tournament.start_date)}
+          </p>
+        )}
+        <h4 className="font-bold text-white text-sm truncate">{tournament.name}</h4>
+        <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1.5">
+          <span>{tournament.game_name || 'Jogo'}</span>
+          <span className="text-gray-600">•</span>
+          <span>{tournament.max_players || '?'} slots</span>
+        </p>
+        <div className="mt-2">
+          <span
+            className={`inline-block px-2.5 py-1 text-[11px] font-semibold rounded-lg text-white ${
+              STATUS_COLORS[tournament.status] || 'bg-gray-500'
+            }`}
+          >
+            {STATUS_LABELS[tournament.status] || tournament.status}
+          </span>
+        </div>
       </div>
     </Link>
   );
 }
 
-function StatBlock({ icon: Icon, value, label }) {
+function getLevelInfo(rp) {
+  if (rp >= 3000) return { level: 10, label: 'Nível 10', color: 'text-red-400', bg: 'bg-red-400/10', border: 'border-red-400/30' };
+  if (rp >= 2501) return { level: 9, label: 'Nível 9', color: 'text-yellow-400', bg: 'bg-yellow-400/10', border: 'border-yellow-400/30' };
+  if (rp >= 2101) return { level: 8, label: 'Nível 8', color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30' };
+  if (rp >= 1701) return { level: 7, label: 'Nível 7', color: 'text-purple-300', bg: 'bg-purple-300/10', border: 'border-purple-300/30' };
+  if (rp >= 1301) return { level: 6, label: 'Nível 6', color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/30' };
+  if (rp >= 901)  return { level: 5, label: 'Nível 5', color: 'text-cyan-400', bg: 'bg-cyan-400/10', border: 'border-cyan-400/30' };
+  if (rp >= 601)  return { level: 4, label: 'Nível 4', color: 'text-green-400', bg: 'bg-green-400/10', border: 'border-green-400/30' };
+  if (rp >= 301)  return { level: 3, label: 'Nível 3', color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30' };
+  if (rp >= 101)  return { level: 2, label: 'Nível 2', color: 'text-gray-300', bg: 'bg-gray-300/10', border: 'border-gray-300/30' };
+  return { level: 1, label: 'Nível 1', color: 'text-gray-400', bg: 'bg-gray-400/10', border: 'border-gray-400/30' };
+}
+
+function GameLevelCard({ ranking }) {
+  const tier = getLevelInfo(ranking.rating || 0);
+  const wins = ranking.wins || 0;
+  const losses = ranking.losses || 0;
+  const total = wins + losses;
+  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+
   return (
-    <div className="text-center">
-      <Icon size={32} className="text-primary-light mx-auto mb-2" />
-      <div className="text-3xl font-bold text-white">{value}</div>
-      <div className="text-sm text-gray-400 mt-1">{label}</div>
+    <div className={`bg-surface rounded-xl border ${tier.border} p-4 text-center`}>
+      <div className="flex items-center justify-center gap-2 mb-2">
+        <Gamepad2 size={14} className="text-gray-400" />
+        <span className="text-sm font-medium text-gray-300">{ranking.game_name}</span>
+      </div>
+      <div className={`text-3xl font-black ${tier.color}`}>{tier.level}</div>
+      <span className={`inline-block mt-1 px-2.5 py-0.5 rounded text-xs font-semibold ${tier.color} ${tier.bg}`}>
+        {tier.label}
+      </span>
+      <div className="mt-2 text-xs text-gray-500">
+        {ranking.rating || 0} RP • {winRate}% WR
+      </div>
+    </div>
+  );
+}
+
+function UnrankedGameCard({ game }) {
+  return (
+    <div className="bg-surface rounded-xl border border-surface-light/30 p-4 text-center opacity-50">
+      <div className="flex items-center justify-center gap-2 mb-2">
+        <Gamepad2 size={14} className="text-gray-500" />
+        <span className="text-sm font-medium text-gray-500">{game.name}</span>
+      </div>
+      <div className="text-3xl font-black text-gray-600">—</div>
+      <span className="inline-block mt-1 px-2.5 py-0.5 rounded text-xs font-semibold text-gray-500 bg-gray-500/10">
+        Sem ranking
+      </span>
+      <div className="mt-2 text-xs text-gray-600">
+        Jogue para desbloquear
+      </div>
     </div>
   );
 }
@@ -99,11 +178,23 @@ function StatBlock({ icon: Icon, value, label }) {
 export default function HomePage() {
   const { user } = useAuth();
   const { data: tournaments, loading: tournamentsLoading } = useCachedData('tournaments', fetchTournaments);
-  const { data: stats } = useCachedData('platform_stats', fetchPlatformStats);
+  const { data: games } = useCachedData('games', fetchGames);
+  const [userRankings, setUserRankings] = useState([]);
+
+  const fetchRankings = useCallback(async () => {
+    if (!user) return;
+    try {
+      const data = await fetchUserRankings(user.id);
+      setUserRankings(data);
+    } catch {}
+  }, [user]);
+
+  useEffect(() => {
+    fetchRankings();
+  }, [fetchRankings]);
 
   const loading = tournamentsLoading;
   const displayTournaments = (tournaments || []).slice(0, 4);
-  const displayStats = stats || { users: 0, matches: 0, tournaments: 0 };
 
   return (
     <div className="min-h-screen">
@@ -166,16 +257,22 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 border-y border-surface-light/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-3 gap-8">
-            <StatBlock icon={Users} value={displayStats.users} label="Jogadores" />
-            <StatBlock icon={Swords} value={displayStats.matches} label="Partidas" />
-            <StatBlock icon={Trophy} value={displayStats.tournaments} label="Campeonatos" />
+      {/* User Game Levels Section */}
+      {user && (
+        <section className="py-16 border-y border-surface-light/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-xl font-bold text-white text-center mb-6">Seus Níveis</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+              {(games || []).map((game) => {
+                const ranking = userRankings.find(r => r.game_id === game.id);
+                return ranking
+                  ? <GameLevelCard key={game.id} ranking={{ ...ranking, game_name: game.name }} />
+                  : <UnrankedGameCard key={game.id} game={game} />;
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Achievements Section */}
       <section className="py-20">
@@ -219,7 +316,7 @@ export default function HomePage() {
               <p className="text-gray-400">Nenhum campeonato disponível.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {displayTournaments.map((t) => (
                 <TournamentCard key={t.id} tournament={t} />
               ))}

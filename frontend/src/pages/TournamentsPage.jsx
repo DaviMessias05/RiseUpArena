@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Trophy, Users, Loader2, Filter, Plus, Calendar, Gamepad2, RefreshCw } from 'lucide-react';
+import { Trophy, Users, Loader2, Filter, Plus, Calendar, Gamepad2, RefreshCw, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCachedData } from '../hooks/useCache';
@@ -24,48 +24,76 @@ const STATUS_LABELS = {
   finished: 'Finalizado',
 };
 
+const FORMAT_LABELS = {
+  single_elimination: 'Eliminação simples',
+  double_elimination: 'Eliminação dupla',
+};
+
+function formatTournamentDate(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  const day = d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+  const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return `${day}, ${time}`;
+}
+
 function TournamentCard({ tournament }) {
   return (
     <div className="bg-surface rounded-xl border border-surface-light/50 hover:border-primary/50 transition-all duration-300 overflow-hidden">
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-white truncate">{tournament.name}</h3>
-            <p className="text-sm text-gray-400 flex items-center gap-1 mt-1">
-              <Gamepad2 size={14} />
-              {tournament.game_name || 'Jogo'}
-            </p>
+      {/* Banner */}
+      <div className="relative aspect-[16/9] bg-surface-light overflow-hidden">
+        {tournament.banner_url ? (
+          <img
+            src={tournament.banner_url}
+            alt={tournament.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-surface-light to-surface">
+            <Trophy size={48} className="text-surface-lighter" />
           </div>
+        )}
+        {/* Game icon overlay */}
+        <div className="absolute bottom-3 left-3 w-8 h-8 rounded-lg bg-surface/80 backdrop-blur-sm flex items-center justify-center border border-surface-light/50">
+          <Gamepad2 size={16} className="text-gray-300" />
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-4">
+        {/* Date */}
+        {tournament.start_date && (
+          <p className="text-xs text-gray-500 font-medium flex items-center gap-1 mb-1.5">
+            <Clock size={12} />
+            {formatTournamentDate(tournament.start_date)}
+          </p>
+        )}
+
+        {/* Name */}
+        <h3 className="text-base font-bold text-white truncate">{tournament.name}</h3>
+
+        {/* Details line */}
+        <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1.5">
+          <span>{tournament.game_name || 'Jogo'}</span>
+          <span className="text-gray-600">•</span>
+          <span>{tournament.max_players || '?'} slots</span>
+          {tournament.format && (
+            <>
+              <span className="text-gray-600">•</span>
+              <span>{FORMAT_LABELS[tournament.format] || tournament.format}</span>
+            </>
+          )}
+        </p>
+
+        {/* Status badge */}
+        <div className="mt-3">
           <span
-            className={`ml-3 px-2.5 py-1 text-xs font-semibold rounded text-white flex-shrink-0 ${
+            className={`inline-block px-3 py-1.5 text-xs font-semibold rounded-lg text-white ${
               STATUS_COLORS[tournament.status] || 'bg-gray-500'
             }`}
           >
             {STATUS_LABELS[tournament.status] || tournament.status}
           </span>
-        </div>
-
-        {tournament.description && (
-          <p className="text-sm text-gray-400 line-clamp-2 mb-4">{tournament.description}</p>
-        )}
-
-        <div className="flex items-center gap-4 text-xs text-gray-500">
-          <span className="flex items-center gap-1">
-            <Users size={14} />
-            {tournament.current_players || 0}/{tournament.max_players || '?'}
-          </span>
-          {tournament.prize_pool && (
-            <span className="flex items-center gap-1">
-              <Trophy size={14} />
-              {tournament.prize_pool}
-            </span>
-          )}
-          {tournament.start_date && (
-            <span className="flex items-center gap-1">
-              <Calendar size={14} />
-              {new Date(tournament.start_date).toLocaleDateString('pt-BR')}
-            </span>
-          )}
         </div>
       </div>
     </div>
