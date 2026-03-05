@@ -168,12 +168,7 @@ export function AuthProvider({ children }) {
     setProfile(null)
     setSession(null)
     setCachedAuth(null, null)
-    clearAllCache()
-    for (const key of Object.keys(localStorage)) {
-      if (key.startsWith('sb-')) {
-        localStorage.removeItem(key)
-      }
-    }
+    try { localStorage.clear() } catch {}
     try {
       await supabase.auth.signOut()
     } catch (err) {

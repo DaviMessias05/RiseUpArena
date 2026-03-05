@@ -70,36 +70,38 @@ export default function Navbar() {
             />
           </Link>
 
-          {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center gap-0.5 flex-1">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`px-4 py-2 text-sm font-medium transition-colors rounded-md ${
-                  isActive(link.to)
-                    ? link.highlight
-                      ? 'text-yellow-400 bg-yellow-400/5'
-                      : 'text-white bg-white/5'
-                    : link.highlight
-                    ? 'text-yellow-400/60 hover:text-yellow-400 hover:bg-yellow-400/5'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
+          {/* Desktop Nav Links — só logado */}
+          {user && (
+            <div className="hidden md:flex items-center gap-0.5 flex-1">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`px-4 py-2 text-sm font-medium transition-colors rounded-md ${
+                    isActive(link.to)
+                      ? link.highlight
+                        ? 'text-yellow-400 bg-yellow-400/5'
+                        : 'text-white bg-white/5'
+                      : link.highlight
+                      ? 'text-yellow-400/60 hover:text-yellow-400 hover:bg-yellow-400/5'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          )}
 
           {/* Desktop Right Side */}
           <div className="hidden md:flex items-center gap-1 ml-auto">
-            {/* Notification Bell */}
-            <button className="relative p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-colors">
-              <Bell size={18} />
-            </button>
-
             {user ? (
               <>
+                {/* Notification Bell */}
+                <button className="relative p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-colors">
+                  <Bell size={18} />
+                </button>
+
                 {/* User profile + social panel */}
                 <div ref={socialRef} className="relative ml-1">
                   <button
@@ -171,21 +173,38 @@ export default function Navbar() {
           </div>
 
 
-          {/* Mobile Hamburger */}
-          <button
-            onClick={() => setMobileOpen(prev => !prev)}
-            className="md:hidden ml-auto p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-          >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          {/* Mobile: login buttons (não logado) ou hamburger (logado) */}
+          {user ? (
+            <button
+              onClick={() => setMobileOpen(prev => !prev)}
+              className="md:hidden ml-auto p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          ) : (
+            <div className="md:hidden ml-auto flex items-center gap-2">
+              <Link
+                to="/auth/login"
+                className="px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+              >
+                Entrar
+              </Link>
+              <Link
+                to="/auth/register"
+                className="px-3 py-1.5 text-sm font-semibold bg-gradient-to-r from-[#f28c38] to-[#e8611a] hover:opacity-90 text-white rounded-lg transition-all"
+              >
+                Cadastrar
+              </Link>
+            </div>
+          )}
         </div>
       </nav>
 
       {/* Friends Bar — só aparece quando logado */}
       {user && <FriendsBar isOpen={friendsOpen} onClose={() => setFriendsOpen(false)} />}
 
-      {/* Mobile Menu */}
-      {mobileOpen && (
+      {/* Mobile Menu — só logado */}
+      {user && mobileOpen && (
         <div className="md:hidden fixed top-14 left-0 right-0 z-40 bg-[#0f1116] border-b border-white/5">
           <div className="px-4 py-3 space-y-0.5">
             {NAV_LINKS.map((link) => (

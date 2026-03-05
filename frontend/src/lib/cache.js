@@ -1,4 +1,13 @@
-const CACHE_PREFIX = 'rua_cache_'
+const CACHE_VERSION = 'v2'
+const CACHE_PREFIX = `rua_cache_${CACHE_VERSION}_`
+
+// Remove all cache entries from older versions
+;(function purgeOldVersions() {
+  try {
+    const old = Object.keys(localStorage).filter(k => k.startsWith('rua_cache_') && !k.startsWith(CACHE_PREFIX))
+    old.forEach(k => localStorage.removeItem(k))
+  } catch {}
+})()
 const memoryCache = new Map()
 
 export function getCache(key) {

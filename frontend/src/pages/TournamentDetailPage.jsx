@@ -70,6 +70,8 @@ export default function TournamentDetailPage() {
   const [isReady, setIsReady] = useState(false);
   const [readyCount, setReadyCount] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
+  const [canCheckIn, setCanCheckIn] = useState(false);
+  const [minutesLeft, setMinutesLeft] = useState(null);
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatSending, setChatSending] = useState(false);
@@ -150,6 +152,22 @@ export default function TournamentDetailPage() {
       setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
     }
   }, [activeTab, messages]);
+
+  // Check-in window: opens 10 min before start
+  useEffect(() => {
+    if (!tournament?.start_date) return;
+
+    function check() {
+      const msLeft = new Date(tournament.start_date) - Date.now();
+      const minsLeft = Math.ceil(msLeft / 60000);
+      setMinutesLeft(minsLeft);
+      setCanCheckIn(msLeft <= 10 * 60 * 1000 && msLeft > -60 * 60 * 1000);
+    }
+
+    check();
+    const interval = setInterval(check, 30000);
+    return () => clearInterval(interval);
+  }, [tournament?.start_date]);
 
   useEffect(() => {
     if (hash === '#prize' && !loading) {
@@ -571,6 +589,18 @@ export default function TournamentDetailPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
+                  <div className="flex flex-col items-center mt-0.5">
+                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${canCheckIn && !isReady ? 'bg-yellow-400 animate-pulse' : isReady ? 'bg-success' : 'bg-gray-600'}`} />
+                    <div className="w-px h-7 bg-surface-light/60 mt-1" />
+                  </div>
+                  <div className="pb-3">
+                    <p className="text-xs font-semibold text-white leading-tight">Check-in</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      {isReady ? 'Confirmado ✓' : canCheckIn ? 'Aberto agora!' : `Abre 10min antes`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
                   <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-primary-light mt-0.5" />
                   <div>
                     <p className="text-xs font-semibold text-white leading-tight">Início do Torneio</p>
@@ -602,15 +632,22 @@ export default function TournamentDetailPage() {
                       <CheckCircle2 size={15} />
                       Pronto para jogar!
                     </div>
-                  ) : (
+                  ) : canCheckIn ? (
                     <button
                       onClick={handleReady}
-                      className="w-full py-2.5 border border-surface-light text-gray-300 hover:border-success/60 hover:text-success font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                      className="w-full py-2.5 border border-success/60 text-success hover:bg-success/10 font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 animate-pulse"
                     >
                       <CheckCircle2 size={15} />
                       Marcar como Pronto
                     </button>
-                  )
+                  ) : minutesLeft !== null && minutesLeft > 0 ? (
+                    <div className="w-full py-2.5 bg-surface-light/50 border border-surface-light text-gray-500 font-semibold rounded-xl text-sm text-center flex items-center justify-center gap-2">
+                      <Clock size={14} />
+                      Check-in abre em {minutesLeft > 60
+                        ? `${Math.floor(minutesLeft / 60)}h ${minutesLeft % 60}min`
+                        : `${minutesLeft}min`}
+                    </div>
+                  ) : null
                 )}
               </div>
             ) : !isOpen ? (
