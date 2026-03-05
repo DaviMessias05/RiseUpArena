@@ -38,7 +38,7 @@ export default function Navbar() {
     }
   };
 
-  const displayName = profile?.username || profile?.display_name || 'Jogador';
+  const displayName = profile?.username || profile?.display_name || user?.email?.split('@')[0] || 'Jogador';
   const userRC = profile?.rise_coins || 0;
   const userAC = profile?.arena_coins || 0;
 

@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom';
 import {
-  Coins,
-  AlertCircle,
   CheckCircle,
   Zap,
   Star,
@@ -122,36 +120,19 @@ function RCPackageCard({ pkg, user }) {
 }
 
 export default function StorePage() {
-  const { user, profile } = useAuth();
-
-  const userRC = profile?.rise_coins || 0;
-  const userAC = profile?.arena_coins || 0;
+  const { user } = useAuth();
 
   const params = new URLSearchParams(window.location.search);
   const successType = params.get('success');
 
   return (
-    <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="h-[calc(100vh-5rem)] overflow-hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white">Loja</h1>
           <p className="text-gray-400 mt-1">Adquira Rise Coins para participar de partidas e eventos</p>
         </div>
-        {user && (
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2.5 bg-surface rounded-xl border border-surface-light/50">
-              <Coins size={20} className="text-accent" />
-              <span className="text-lg font-bold text-accent">{formatNumber(userRC)}</span>
-              <span className="text-xs text-gray-400 font-medium">RC</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2.5 bg-surface rounded-xl border border-surface-light/50">
-              <Coins size={20} className="text-emerald-400" />
-              <span className="text-lg font-bold text-emerald-400">{formatNumber(userAC)}</span>
-              <span className="text-xs text-gray-400 font-medium">AC</span>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Alerts */}

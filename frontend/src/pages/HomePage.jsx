@@ -120,17 +120,30 @@ function TournamentCard({ tournament }) {
   );
 }
 
+const LEVELS_INFO = [
+  { level: 1, minRP: 0, color: 'text-slate-400', bg: 'bg-slate-400/10', border: 'border-slate-400/30' },
+  { level: 2, minRP: 101, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/30' },
+  { level: 3, minRP: 301, color: 'text-cyan-400', bg: 'bg-cyan-400/10', border: 'border-cyan-400/30' },
+  { level: 4, minRP: 601, color: 'text-teal-400', bg: 'bg-teal-400/10', border: 'border-teal-400/30' },
+  { level: 5, minRP: 901, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30' },
+  { level: 6, minRP: 1301, color: 'text-lime-400', bg: 'bg-lime-400/10', border: 'border-lime-400/30' },
+  { level: 7, minRP: 1701, color: 'text-yellow-400', bg: 'bg-yellow-400/10', border: 'border-yellow-400/30' },
+  { level: 8, minRP: 2101, color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/30' },
+  { level: 9, minRP: 2501, color: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/30' },
+  { level: 10, minRP: 3000, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30' },
+];
+
 function getLevelInfo(rp) {
-  if (rp >= 3000) return { level: 10, label: 'Nível 10', color: 'text-red-400', bg: 'bg-red-400/10', border: 'border-red-400/30' };
-  if (rp >= 2501) return { level: 9, label: 'Nível 9', color: 'text-yellow-400', bg: 'bg-yellow-400/10', border: 'border-yellow-400/30' };
-  if (rp >= 2101) return { level: 8, label: 'Nível 8', color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30' };
-  if (rp >= 1701) return { level: 7, label: 'Nível 7', color: 'text-purple-300', bg: 'bg-purple-300/10', border: 'border-purple-300/30' };
-  if (rp >= 1301) return { level: 6, label: 'Nível 6', color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/30' };
-  if (rp >= 901)  return { level: 5, label: 'Nível 5', color: 'text-cyan-400', bg: 'bg-cyan-400/10', border: 'border-cyan-400/30' };
-  if (rp >= 601)  return { level: 4, label: 'Nível 4', color: 'text-green-400', bg: 'bg-green-400/10', border: 'border-green-400/30' };
-  if (rp >= 301)  return { level: 3, label: 'Nível 3', color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30' };
-  if (rp >= 101)  return { level: 2, label: 'Nível 2', color: 'text-gray-300', bg: 'bg-gray-300/10', border: 'border-gray-300/30' };
-  return { level: 1, label: 'Nível 1', color: 'text-gray-400', bg: 'bg-gray-400/10', border: 'border-gray-400/30' };
+  if (rp >= 3000) return { level: 10, label: 'Nível 10', color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30' };
+  if (rp >= 2501) return { level: 9, label: 'Nível 9', color: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/30' };
+  if (rp >= 2101) return { level: 8, label: 'Nível 8', color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/30' };
+  if (rp >= 1701) return { level: 7, label: 'Nível 7', color: 'text-yellow-400', bg: 'bg-yellow-400/10', border: 'border-yellow-400/30' };
+  if (rp >= 1301) return { level: 6, label: 'Nível 6', color: 'text-lime-400', bg: 'bg-lime-400/10', border: 'border-lime-400/30' };
+  if (rp >= 901)  return { level: 5, label: 'Nível 5', color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30' };
+  if (rp >= 601)  return { level: 4, label: 'Nível 4', color: 'text-teal-400', bg: 'bg-teal-400/10', border: 'border-teal-400/30' };
+  if (rp >= 301)  return { level: 3, label: 'Nível 3', color: 'text-cyan-400', bg: 'bg-cyan-400/10', border: 'border-cyan-400/30' };
+  if (rp >= 101)  return { level: 2, label: 'Nível 2', color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/30' };
+  return { level: 1, label: 'Nível 1', color: 'text-slate-400', bg: 'bg-slate-400/10', border: 'border-slate-400/30' };
 }
 
 function GameLevelCard({ ranking }) {
@@ -158,18 +171,19 @@ function GameLevelCard({ ranking }) {
 }
 
 function UnrankedGameCard({ game }) {
+  const tier = getLevelInfo(0);
   return (
-    <div className="bg-surface rounded-xl border border-surface-light/30 p-4 text-center opacity-50">
+    <div className={`bg-surface rounded-xl border ${tier.border} p-4 text-center`}>
       <div className="flex items-center justify-center gap-2 mb-2">
-        <Gamepad2 size={14} className="text-gray-500" />
-        <span className="text-sm font-medium text-gray-500">{game.name}</span>
+        <Gamepad2 size={14} className="text-gray-400" />
+        <span className="text-sm font-medium text-gray-300">{game.name}</span>
       </div>
-      <div className="text-3xl font-black text-gray-600">—</div>
-      <span className="inline-block mt-1 px-2.5 py-0.5 rounded text-xs font-semibold text-gray-500 bg-gray-500/10">
-        Sem ranking
+      <div className={`text-3xl font-black ${tier.color}`}>{tier.level}</div>
+      <span className={`inline-block mt-1 px-2.5 py-0.5 rounded text-xs font-semibold ${tier.color} ${tier.bg}`}>
+        {tier.label}
       </span>
-      <div className="mt-2 text-xs text-gray-600">
-        Jogue para desbloquear
+      <div className="mt-2 text-xs text-gray-500">
+        0 RP • 0% WR
       </div>
     </div>
   );
@@ -273,6 +287,22 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Levels Info Section */}
+      <section className="py-16 bg-surface/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-xl font-bold text-white text-center mb-2">Sistema de Níveis</h2>
+          <p className="text-gray-400 text-center text-sm mb-6">Suba de nível vencendo partidas e campeonatos</p>
+          <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 max-w-4xl mx-auto">
+            {LEVELS_INFO.map((lvl) => (
+              <div key={lvl.level} className={`text-center p-2 rounded-xl border ${lvl.border} ${lvl.bg}`}>
+                <div className={`text-2xl font-black ${lvl.color}`}>{lvl.level}</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">{lvl.minRP}+ RP</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Achievements Section */}
       <section className="py-20">
