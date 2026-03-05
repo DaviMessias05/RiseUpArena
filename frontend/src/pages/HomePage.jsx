@@ -89,7 +89,7 @@ function TournamentCard({ tournament }) {
           </div>
         )}
         {tournament.start_date && (
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
+          <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
             <div className="flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
               <Clock size={10} className="text-gray-300" />
               <span className="text-[10px] text-gray-200 font-medium">{formatTournamentDate(tournament.start_date)}</span>
