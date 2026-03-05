@@ -13,6 +13,7 @@ import {
   Clock,
   CheckCircle2,
   Play,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import * as api from '../lib/api';
@@ -93,8 +94,8 @@ export default function LobbiesPage() {
   const { user } = useAuth();
   const { executeRecaptcha } = useCaptcha();
 
-  const { data: lobbies, loading: lLoading, refetch: refetchLobbies } = useCachedData('lobbies', fetchLobbies, 30 * 1000);
-  const { data: games, loading: gLoading } = useCachedData('games', fetchGames, 10 * 60 * 1000);
+  const { data: lobbies, loading: lLoading, refetch: refetchLobbies } = useCachedData('lobbies', fetchLobbies);
+  const { data: games, loading: gLoading } = useCachedData('games', fetchGames);
   const [filterGame, setFilterGame] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
@@ -151,15 +152,25 @@ export default function LobbiesPage() {
           <h1 className="text-3xl font-bold text-white">Lobbies</h1>
           <p className="text-gray-400 mt-1">Encontre ou crie partidas rápidas</p>
         </div>
-        {user && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-light text-white font-bold rounded-xl transition-colors"
+            onClick={refetchLobbies}
+            disabled={loading}
+            className="p-2.5 bg-surface-light hover:bg-surface-lighter text-gray-400 hover:text-white rounded-xl border border-surface-lighter transition-colors disabled:opacity-50"
+            title="Atualizar"
           >
-            <Plus size={18} />
-            Criar Lobby
+            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
-        )}
+          {user && (
+            <button
+              onClick={() => setShowCreate(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-light text-white font-bold rounded-xl transition-colors"
+            >
+              <Plus size={18} />
+              Criar Lobby
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Create Lobby Modal */}

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Trophy, Users, Loader2, Filter, Plus, Calendar, Gamepad2 } from 'lucide-react';
+import { Trophy, Users, Loader2, Filter, Plus, Calendar, Gamepad2, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCachedData } from '../hooks/useCache';
@@ -74,8 +74,8 @@ function TournamentCard({ tournament }) {
 
 export default function TournamentsPage() {
   const { isAdmin } = useAuth();
-  const { data: tournaments, loading: tLoading } = useCachedData('tournaments', fetchTournaments, 5 * 60 * 1000);
-  const { data: games, loading: gLoading } = useCachedData('games', fetchGames, 10 * 60 * 1000);
+  const { data: tournaments, loading: tLoading, refetch: refetchTournaments } = useCachedData('tournaments', fetchTournaments);
+  const { data: games, loading: gLoading } = useCachedData('games', fetchGames);
   const [filterGame, setFilterGame] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
@@ -94,15 +94,25 @@ export default function TournamentsPage() {
           <h1 className="text-3xl font-bold text-white">Campeonatos</h1>
           <p className="text-gray-400 mt-1">Participe de competições e conquiste prêmios</p>
         </div>
-        {isAdmin && (
-          <Link
-            to="/admin"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-light text-white font-bold rounded-xl transition-colors"
+        <div className="flex items-center gap-2">
+          <button
+            onClick={refetchTournaments}
+            disabled={loading}
+            className="p-2.5 bg-surface-light hover:bg-surface-lighter text-gray-400 hover:text-white rounded-xl border border-surface-lighter transition-colors disabled:opacity-50"
+            title="Atualizar"
           >
-            <Plus size={18} />
-            Criar Campeonato
-          </Link>
-        )}
+            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+          </button>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-light text-white font-bold rounded-xl transition-colors"
+            >
+              <Plus size={18} />
+              Criar Campeonato
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Filters */}

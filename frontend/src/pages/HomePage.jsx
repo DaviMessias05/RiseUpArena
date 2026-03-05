@@ -96,9 +96,9 @@ function StatBlock({ icon: Icon, value, label }) {
 
 export default function HomePage() {
   const { user } = useAuth();
-  const { data: games, loading: gamesLoading } = useCachedData('games', fetchGames, 10 * 60 * 1000);
-  const { data: tournaments, loading: tournamentsLoading } = useCachedData('tournaments', fetchTournaments, 5 * 60 * 1000);
-  const { data: stats } = useCachedData('platform_stats', fetchPlatformStats, 5 * 60 * 1000);
+  const { data: games, loading: gamesLoading } = useCachedData('games', fetchGames);
+  const { data: tournaments, loading: tournamentsLoading } = useCachedData('tournaments', fetchTournaments);
+  const { data: stats } = useCachedData('platform_stats', fetchPlatformStats);
 
   const loading = gamesLoading || tournamentsLoading;
   const displayGames = (games || []).slice(0, 3);

@@ -64,9 +64,9 @@ export default function GameDetailPage() {
 
   const gameFetcher = useCallback(() => fetchGame(slug), [slug]);
   const rankingsFetcher = useCallback(() => fetchRankings(slug), [slug]);
-  const { data: allTournaments } = useCachedData('tournaments', fetchTournaments, 5 * 60 * 1000);
-  const { data: game, loading: gameLoading, error: gameError } = useCachedData(`game_${slug}`, gameFetcher, 10 * 60 * 1000);
-  const { data: rankings } = useCachedData(`rankings_${slug}`, rankingsFetcher, 2 * 60 * 1000);
+  const { data: allTournaments } = useCachedData('tournaments', fetchTournaments);
+  const { data: game, loading: gameLoading, error: gameError } = useCachedData(`game_${slug}`, gameFetcher);
+  const { data: rankings } = useCachedData(`rankings_${slug}`, rankingsFetcher);
 
   const displayRankings = (rankings || []).slice(0, 10);
   const tournaments = (allTournaments || []).filter(

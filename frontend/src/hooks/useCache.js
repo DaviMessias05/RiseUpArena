@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getCache, setCache } from '../lib/cache'
 
-export function useCachedData(key, fetcher, ttlMs = 5 * 60 * 1000) {
+export function useCachedData(key, fetcher, ttlMs = 60 * 1000) {
   const cached = getCache(key)
   const [data, setData] = useState(cached)
   const [loading, setLoading] = useState(!cached)

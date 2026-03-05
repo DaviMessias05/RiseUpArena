@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Gamepad2, Loader2, Users } from 'lucide-react';
+import { Gamepad2, Loader2, Users, RefreshCw } from 'lucide-react';
 import { useCachedData } from '../hooks/useCache';
 import { fetchGames } from '../lib/fetchers';
 
@@ -49,13 +49,23 @@ function GameCard({ game }) {
 }
 
 export default function GamesPage() {
-  const { data: games, loading, error } = useCachedData('games', fetchGames, 10 * 60 * 1000);
+  const { data: games, loading, error, refetch } = useCachedData('games', fetchGames);
 
   return (
     <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Jogos</h1>
-        <p className="text-gray-400 mt-1">Explore os jogos disponíveis na plataforma</p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Jogos</h1>
+          <p className="text-gray-400 mt-1">Explore os jogos disponíveis na plataforma</p>
+        </div>
+        <button
+          onClick={refetch}
+          disabled={loading}
+          className="p-2.5 bg-surface-light hover:bg-surface-lighter text-gray-400 hover:text-white rounded-xl border border-surface-lighter transition-colors disabled:opacity-50"
+          title="Atualizar"
+        >
+          <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+        </button>
       </div>
 
       {loading ? (

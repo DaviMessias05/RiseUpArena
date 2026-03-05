@@ -26,7 +26,7 @@ export function getCache(key) {
   }
 }
 
-export function setCache(key, data, ttlMs = 5 * 60 * 1000) {
+export function setCache(key, data, ttlMs = 60 * 1000) {
   const entry = { data, expiresAt: Date.now() + ttlMs }
   memoryCache.set(key, entry)
   try {

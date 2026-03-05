@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Trophy, Loader2, Users, Gamepad2 } from 'lucide-react';
+import { Trophy, Loader2, Users, Gamepad2, RefreshCw } from 'lucide-react';
 import { useCachedData } from '../hooks/useCache';
 import { fetchGames, fetchRankings } from '../lib/fetchers';
 
@@ -46,7 +46,7 @@ function getLevelInfo(rp) {
 }
 
 export default function RankingsPage() {
-  const { data: games, loading: gamesLoading, error: gamesError } = useCachedData('games', fetchGames, 10 * 60 * 1000);
+  const { data: games, loading: gamesLoading, error: gamesError } = useCachedData('games', fetchGames);
   const [selectedGame, setSelectedGame] = useState('');
   const [rankings, setRankings] = useState([]);
   const [rankingsLoading, setRankingsLoading] = useState(false);
@@ -58,25 +58,22 @@ export default function RankingsPage() {
     }
   }, [games, selectedGame]);
 
+  async function loadRankings() {
+    if (!selectedGame) return;
+    setRankingsLoading(true);
+    try {
+      const data = await fetchRankings(selectedGame);
+      setRankings(data);
+    } catch {
+      setRankings([]);
+    } finally {
+      setRankingsLoading(false);
+    }
+  }
+
   // Fetch rankings when game changes
   useEffect(() => {
-    if (!selectedGame) return;
-    let cancelled = false;
-
-    async function loadRankings() {
-      setRankingsLoading(true);
-      try {
-        const data = await fetchRankings(selectedGame);
-        if (!cancelled) setRankings(data);
-      } catch {
-        if (!cancelled) setRankings([]);
-      } finally {
-        if (!cancelled) setRankingsLoading(false);
-      }
-    }
-
     loadRankings();
-    return () => { cancelled = true; };
   }, [selectedGame]);
 
   if (gamesLoading) {
@@ -103,9 +100,19 @@ export default function RankingsPage() {
 
   return (
     <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Rankings</h1>
-        <p className="text-gray-400 mt-1">Os melhores jogadores da plataforma</p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Rankings</h1>
+          <p className="text-gray-400 mt-1">Os melhores jogadores da plataforma</p>
+        </div>
+        <button
+          onClick={loadRankings}
+          disabled={rankingsLoading}
+          className="p-2.5 bg-surface-light hover:bg-surface-lighter text-gray-400 hover:text-white rounded-xl border border-surface-lighter transition-colors disabled:opacity-50"
+          title="Atualizar"
+        >
+          <RefreshCw size={18} className={rankingsLoading ? 'animate-spin' : ''} />
+        </button>
       </div>
 
       {/* Game Selector */}
