@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useCaptcha } from '../lib/useCaptcha';
 import {
@@ -15,8 +15,9 @@ import {
   Play,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
 import * as api from '../lib/api';
+import { useCachedData } from '../hooks/useCache';
+import { fetchLobbies, fetchGames } from '../lib/fetchers';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Todos os status' },
@@ -92,10 +93,8 @@ export default function LobbiesPage() {
   const { user } = useAuth();
   const { executeRecaptcha } = useCaptcha();
 
-  const [lobbies, setLobbies] = useState([]);
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: lobbies, loading: lLoading, refetch: refetchLobbies } = useCachedData('lobbies', fetchLobbies, 30 * 1000);
+  const { data: games, loading: gLoading } = useCachedData('games', fetchGames, 10 * 60 * 1000);
   const [filterGame, setFilterGame] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
@@ -108,62 +107,7 @@ export default function LobbiesPage() {
     max_players: 10,
   });
 
-  const fetchLobbies = useCallback(async () => {
-    try {
-      const { data, error: err } = await supabase
-        .from('lobbies')
-        .select('*, games(name, slug)')
-        .in('status', ['waiting', 'ready'])
-        .order('created_at', { ascending: false });
-
-      if (err) throw err;
-      const mapped = (data || []).map(l => ({
-        ...l,
-        game_name: l.games?.name || 'Jogo',
-        game_slug: l.games?.slug,
-      }));
-      setLobbies(mapped);
-    } catch (err) {
-      setError(err.message);
-    }
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchData() {
-      try {
-        const [{ data: lobbiesData, error: lErr }, { data: gamesData, error: gErr }] = await Promise.all([
-          supabase
-            .from('lobbies')
-            .select('*, games(name, slug)')
-            .in('status', ['waiting', 'ready'])
-            .order('created_at', { ascending: false }),
-          supabase.from('games').select('*').eq('is_active', true).order('name'),
-        ]);
-
-        if (lErr) throw lErr;
-        if (gErr) throw gErr;
-        if (cancelled) return;
-
-        const mapped = (lobbiesData || []).map(l => ({
-          ...l,
-          game_name: l.games?.name || 'Jogo',
-          game_slug: l.games?.slug,
-        }));
-
-        setLobbies(mapped);
-        setGames(gamesData || []);
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchData();
-    return () => { cancelled = true; };
-  }, []);
+  const loading = lLoading || gLoading;
 
   async function handleCreateLobby(e) {
     e.preventDefault();
@@ -186,7 +130,7 @@ export default function LobbiesPage() {
 
       setShowCreate(false);
       setNewLobby({ name: '', game_id: '', max_players: 10 });
-      await fetchLobbies();
+      refetchLobbies();
     } catch (err) {
       setCreateError(err.message || 'Erro ao criar lobby.');
     } finally {
@@ -194,7 +138,7 @@ export default function LobbiesPage() {
     }
   }
 
-  const filteredLobbies = lobbies.filter((lobby) => {
+  const filteredLobbies = (lobbies || []).filter((lobby) => {
     if (filterGame && lobby.game_slug !== filterGame && lobby.game_id !== filterGame) return false;
     if (filterStatus && lobby.status !== filterStatus) return false;
     return true;
@@ -267,7 +211,7 @@ export default function LobbiesPage() {
                   className="w-full px-4 py-3 bg-surface-light border border-surface-lighter rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="">Selecione um jogo</option>
-                  {games.map((game) => (
+                  {(games || []).map((game) => (
                     <option key={game.id || game.slug} value={game.id || game.slug}>
                       {game.name}
                     </option>
@@ -319,7 +263,7 @@ export default function LobbiesPage() {
             className="px-4 py-2 bg-surface-light border border-surface-lighter rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos os jogos</option>
-            {games.map((game) => (
+            {(games || []).map((game) => (
               <option key={game.id || game.slug} value={game.slug || game.id}>
                 {game.name}
               </option>
@@ -342,16 +286,6 @@ export default function LobbiesPage() {
       {loading ? (
         <div className="flex justify-center py-20">
           <Loader2 size={40} className="text-primary-light animate-spin" />
-        </div>
-      ) : error ? (
-        <div className="text-center py-20">
-          <p className="text-danger mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-surface-light hover:bg-surface-lighter text-white rounded-lg transition-colors"
-          >
-            Tentar novamente
-          </button>
         </div>
       ) : filteredLobbies.length === 0 ? (
         <div className="text-center py-20">

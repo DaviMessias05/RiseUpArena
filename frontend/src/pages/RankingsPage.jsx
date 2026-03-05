@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Trophy, Loader2, Users, Gamepad2 } from 'lucide-react';
-import * as api from '../lib/api';
+import { useCachedData } from '../hooks/useCache';
+import { fetchGames, fetchRankings } from '../lib/fetchers';
 
 function RankBadge({ position }) {
   if (position === 1) {
@@ -45,63 +46,40 @@ function getLevelInfo(rp) {
 }
 
 export default function RankingsPage() {
-  const [games, setGames] = useState([]);
+  const { data: games, loading: gamesLoading, error: gamesError } = useCachedData('games', fetchGames, 10 * 60 * 1000);
   const [selectedGame, setSelectedGame] = useState('');
   const [rankings, setRankings] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [rankingsLoading, setRankingsLoading] = useState(false);
-  const [error, setError] = useState(null);
 
+  // Set first game as selected when games load
   useEffect(() => {
-    let cancelled = false;
-
-    async function fetchGames() {
-      try {
-        const data = await api.getGames();
-        if (cancelled) return;
-
-        const gameList = Array.isArray(data) ? data : [];
-        setGames(gameList);
-
-        if (gameList.length > 0) {
-          const firstSlug = gameList[0].slug || gameList[0].id;
-          setSelectedGame(firstSlug);
-        }
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+    if (games && games.length > 0 && !selectedGame) {
+      setSelectedGame(games[0].slug || games[0].id);
     }
+  }, [games, selectedGame]);
 
-    fetchGames();
-    return () => { cancelled = true; };
-  }, []);
-
+  // Fetch rankings when game changes
   useEffect(() => {
     if (!selectedGame) return;
-
     let cancelled = false;
 
-    async function fetchRankings() {
+    async function loadRankings() {
       setRankingsLoading(true);
       try {
-        const data = await api.getRankings(selectedGame);
-        if (!cancelled) {
-          setRankings(Array.isArray(data) ? data : []);
-        }
-      } catch (err) {
+        const data = await fetchRankings(selectedGame);
+        if (!cancelled) setRankings(data);
+      } catch {
         if (!cancelled) setRankings([]);
       } finally {
         if (!cancelled) setRankingsLoading(false);
       }
     }
 
-    fetchRankings();
+    loadRankings();
     return () => { cancelled = true; };
   }, [selectedGame]);
 
-  if (loading) {
+  if (gamesLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center">
         <Loader2 size={40} className="text-primary-light animate-spin" />
@@ -109,10 +87,10 @@ export default function RankingsPage() {
     );
   }
 
-  if (error) {
+  if (gamesError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4">
-        <p className="text-danger text-lg mb-4">{error}</p>
+        <p className="text-danger text-lg mb-4">{gamesError.message}</p>
         <button
           onClick={() => window.location.reload()}
           className="px-6 py-2 bg-surface-light hover:bg-surface-lighter text-white rounded-lg transition-colors"
@@ -131,7 +109,7 @@ export default function RankingsPage() {
       </div>
 
       {/* Game Selector */}
-      {games.length === 0 ? (
+      {(games || []).length === 0 ? (
         <div className="text-center py-20">
           <Gamepad2 size={64} className="text-surface-lighter mx-auto mb-4" />
           <h2 className="text-xl font-bold text-white mb-2">Nenhum jogo disponível</h2>

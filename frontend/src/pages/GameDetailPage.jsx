@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Gamepad2,
@@ -10,7 +10,8 @@ import {
   ArrowLeft,
   Swords,
 } from 'lucide-react';
-import * as api from '../lib/api';
+import { useCachedData } from '../hooks/useCache';
+import { fetchGame, fetchRankings, fetchTournaments } from '../lib/fetchers';
 
 const TABS = [
   { id: 'overview', label: 'Visão Geral', icon: Gamepad2 },
@@ -59,60 +60,20 @@ function getTierLabel(rating) {
 
 export default function GameDetailPage() {
   const { slug } = useParams();
-  const [game, setGame] = useState(null);
-  const [rankings, setRankings] = useState([]);
-  const [tournaments, setTournaments] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const gameFetcher = useCallback(() => fetchGame(slug), [slug]);
+  const rankingsFetcher = useCallback(() => fetchRankings(slug), [slug]);
+  const { data: allTournaments } = useCachedData('tournaments', fetchTournaments, 5 * 60 * 1000);
+  const { data: game, loading: gameLoading, error: gameError } = useCachedData(`game_${slug}`, gameFetcher, 10 * 60 * 1000);
+  const { data: rankings } = useCachedData(`rankings_${slug}`, rankingsFetcher, 2 * 60 * 1000);
 
-    async function fetchData() {
-      setLoading(true);
-      setError(null);
+  const displayRankings = (rankings || []).slice(0, 10);
+  const tournaments = (allTournaments || []).filter(
+    (t) => t.game_slug === slug || t.game_id === game?.id
+  );
 
-      try {
-        const [gameData, rankingsData, tournamentsData] = await Promise.allSettled([
-          api.getGame(slug),
-          api.getRankings(slug),
-          api.getTournaments(),
-        ]);
-
-        if (cancelled) return;
-
-        if (gameData.status === 'fulfilled') {
-          setGame(gameData.value);
-        } else {
-          throw new Error('Jogo não encontrado.');
-        }
-
-        if (rankingsData.status === 'fulfilled') {
-          setRankings(Array.isArray(rankingsData.value) ? rankingsData.value.slice(0, 10) : []);
-        }
-
-        if (tournamentsData.status === 'fulfilled') {
-          const allTournaments = Array.isArray(tournamentsData.value) ? tournamentsData.value : [];
-          setTournaments(
-            allTournaments.filter(
-              (t) =>
-                t.game_slug === slug || t.game_id === gameData.value?.id
-            )
-          );
-        }
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchData();
-    return () => { cancelled = true; };
-  }, [slug]);
-
-  if (loading) {
+  if (gameLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center">
         <Loader2 size={40} className="text-primary-light animate-spin" />
@@ -120,10 +81,10 @@ export default function GameDetailPage() {
     );
   }
 
-  if (error || !game) {
+  if (gameError || !game) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4">
-        <p className="text-danger text-lg mb-4">{error || 'Jogo não encontrado.'}</p>
+        <p className="text-danger text-lg mb-4">{gameError?.message || 'Jogo não encontrado.'}</p>
         <Link
           to="/games"
           className="flex items-center gap-2 text-primary-light hover:text-primary transition-colors"
@@ -207,7 +168,7 @@ export default function GameDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-surface rounded-xl border border-surface-light/50 p-6 text-center">
                 <Users size={28} className="text-primary-light mx-auto mb-2" />
-                <div className="text-2xl font-bold text-white">{rankings.length}</div>
+                <div className="text-2xl font-bold text-white">{displayRankings.length}</div>
                 <div className="text-sm text-gray-400">Jogadores ranqueados</div>
               </div>
               <div className="bg-surface rounded-xl border border-surface-light/50 p-6 text-center">
@@ -222,11 +183,11 @@ export default function GameDetailPage() {
               </div>
             </div>
 
-            {rankings.length > 0 && (
+            {displayRankings.length > 0 && (
               <div className="bg-surface rounded-xl border border-surface-light/50 p-6">
                 <h2 className="text-xl font-bold text-white mb-4">Top 3 Jogadores</h2>
                 <div className="space-y-3">
-                  {rankings.slice(0, 3).map((player, idx) => {
+                  {displayRankings.slice(0, 3).map((player, idx) => {
                     const tier = getTierLabel(player.rating || 0);
                     return (
                       <div
@@ -271,7 +232,7 @@ export default function GameDetailPage() {
             <div className="p-6 border-b border-surface-light/50">
               <h2 className="text-xl font-bold text-white">Rankings - Top 10</h2>
             </div>
-            {rankings.length === 0 ? (
+            {displayRankings.length === 0 ? (
               <div className="p-12 text-center">
                 <Trophy size={48} className="text-surface-lighter mx-auto mb-4" />
                 <p className="text-gray-400">Nenhum jogador ranqueado ainda neste jogo.</p>
@@ -302,7 +263,7 @@ export default function GameDetailPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-light/30">
-                    {rankings.map((player, idx) => {
+                    {displayRankings.map((player, idx) => {
                       const tier = getTierLabel(player.rating || 0);
                       const wins = player.wins || 0;
                       const losses = player.losses || 0;
@@ -420,7 +381,7 @@ export default function GameDetailPage() {
             <h2 className="text-xl font-bold text-white mb-4">Estatísticas do Jogo</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-surface rounded-xl border border-surface-light/50 p-6 text-center">
-                <div className="text-3xl font-bold text-white">{rankings.length}</div>
+                <div className="text-3xl font-bold text-white">{displayRankings.length}</div>
                 <div className="text-sm text-gray-400 mt-1">Jogadores Ranqueados</div>
               </div>
               <div className="bg-surface rounded-xl border border-surface-light/50 p-6 text-center">
@@ -433,9 +394,9 @@ export default function GameDetailPage() {
               </div>
               <div className="bg-surface rounded-xl border border-surface-light/50 p-6 text-center">
                 <div className="text-3xl font-bold text-white">
-                  {rankings.length > 0
+                  {displayRankings.length > 0
                     ? Math.round(
-                        rankings.reduce((sum, p) => sum + (p.rating || 0), 0) / rankings.length
+                        displayRankings.reduce((sum, p) => sum + (p.rating || 0), 0) / displayRankings.length
                       )
                     : 0}
                 </div>
@@ -443,19 +404,19 @@ export default function GameDetailPage() {
               </div>
             </div>
 
-            {rankings.length > 0 && (
+            {displayRankings.length > 0 && (
               <div className="bg-surface rounded-xl border border-surface-light/50 p-6">
                 <h3 className="text-lg font-bold text-white mb-4">Distribuição de Tiers</h3>
                 <div className="space-y-3">
                   {['Challenger', 'Diamond', 'Platinum', 'Gold', 'Silver', 'Bronze'].map(
                     (tierName) => {
-                      const count = rankings.filter((p) => {
+                      const count = displayRankings.filter((p) => {
                         const tier = getTierLabel(p.rating || 0);
                         return tier.label === tierName;
                       }).length;
                       const percentage =
-                        rankings.length > 0
-                          ? Math.round((count / rankings.length) * 100)
+                        displayRankings.length > 0
+                          ? Math.round((count / displayRankings.length) * 100)
                           : 0;
                       const tierInfo = getTierLabel(
                         tierName === 'Challenger'

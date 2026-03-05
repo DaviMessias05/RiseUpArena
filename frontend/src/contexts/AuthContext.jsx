@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
+import { clearAllCache } from '../lib/cache'
 
 const AuthContext = createContext(null)
 
@@ -169,6 +170,7 @@ export function AuthProvider({ children }) {
     setProfile(null)
     setSession(null)
     setCachedAuth(null, null)
+    clearAllCache()
     for (const key of Object.keys(localStorage)) {
       if (key.startsWith('sb-')) {
         localStorage.removeItem(key)

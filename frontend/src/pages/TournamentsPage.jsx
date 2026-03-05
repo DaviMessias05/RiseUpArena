@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Users, Loader2, Filter, Plus, Calendar, Gamepad2 } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import { useCachedData } from '../hooks/useCache';
+import { fetchTournaments, fetchGames } from '../lib/fetchers';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Todos os status' },
@@ -73,47 +74,14 @@ function TournamentCard({ tournament }) {
 
 export default function TournamentsPage() {
   const { isAdmin } = useAuth();
-  const [tournaments, setTournaments] = useState([]);
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: tournaments, loading: tLoading } = useCachedData('tournaments', fetchTournaments, 5 * 60 * 1000);
+  const { data: games, loading: gLoading } = useCachedData('games', fetchGames, 10 * 60 * 1000);
   const [filterGame, setFilterGame] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  useEffect(() => {
-    let cancelled = false;
+  const loading = tLoading || gLoading;
 
-    async function fetchData() {
-      try {
-        const [{ data: tournamentsData, error: tErr }, { data: gamesData, error: gErr }] = await Promise.all([
-          supabase.from('tournaments').select('*, games(name, slug)').order('created_at', { ascending: false }),
-          supabase.from('games').select('*').eq('is_active', true).order('name'),
-        ]);
-
-        if (tErr) throw tErr;
-        if (gErr) throw gErr;
-        if (cancelled) return;
-
-        const mapped = (tournamentsData || []).map(t => ({
-          ...t,
-          game_name: t.games?.name || 'Jogo',
-          game_slug: t.games?.slug,
-        }));
-
-        setTournaments(mapped);
-        setGames(gamesData || []);
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchData();
-    return () => { cancelled = true; };
-  }, []);
-
-  const filteredTournaments = tournaments.filter((t) => {
+  const filteredTournaments = (tournaments || []).filter((t) => {
     if (filterGame && t.game_slug !== filterGame && t.game_id !== filterGame) return false;
     if (filterStatus && t.status !== filterStatus) return false;
     return true;
@@ -147,7 +115,7 @@ export default function TournamentsPage() {
             className="px-4 py-2 bg-surface-light border border-surface-lighter rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">Todos os jogos</option>
-            {games.map((game) => (
+            {(games || []).map((game) => (
               <option key={game.id || game.slug} value={game.slug || game.id}>
                 {game.name}
               </option>
@@ -170,16 +138,6 @@ export default function TournamentsPage() {
       {loading ? (
         <div className="flex justify-center py-20">
           <Loader2 size={40} className="text-primary-light animate-spin" />
-        </div>
-      ) : error ? (
-        <div className="text-center py-20">
-          <p className="text-danger mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-surface-light hover:bg-surface-lighter text-white rounded-lg transition-colors"
-          >
-            Tentar novamente
-          </button>
         </div>
       ) : filteredTournaments.length === 0 ? (
         <div className="text-center py-20">

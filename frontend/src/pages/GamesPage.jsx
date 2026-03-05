@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Gamepad2, Loader2, Users } from 'lucide-react';
-import * as api from '../lib/api';
+import { useCachedData } from '../hooks/useCache';
+import { fetchGames } from '../lib/fetchers';
 
 function GameCard({ game }) {
   return (
@@ -49,29 +49,7 @@ function GameCard({ game }) {
 }
 
 export default function GamesPage() {
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchGames() {
-      try {
-        const data = await api.getGames();
-        if (!cancelled) {
-          setGames(Array.isArray(data) ? data : []);
-        }
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchGames();
-    return () => { cancelled = true; };
-  }, []);
+  const { data: games, loading, error } = useCachedData('games', fetchGames, 10 * 60 * 1000);
 
   return (
     <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -86,7 +64,7 @@ export default function GamesPage() {
         </div>
       ) : error ? (
         <div className="text-center py-20">
-          <p className="text-danger mb-4">{error}</p>
+          <p className="text-danger mb-4">{error.message}</p>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-2 bg-surface-light hover:bg-surface-lighter text-white rounded-lg transition-colors"
@@ -94,7 +72,7 @@ export default function GamesPage() {
             Tentar novamente
           </button>
         </div>
-      ) : games.length === 0 ? (
+      ) : (games || []).length === 0 ? (
         <div className="text-center py-20">
           <Gamepad2 size={64} className="text-surface-lighter mx-auto mb-4" />
           <h2 className="text-xl font-bold text-white mb-2">Nenhum jogo disponível</h2>

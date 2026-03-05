@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Gamepad2, Trophy, Users, Swords, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import * as api from '../lib/api';
+import { useCachedData } from '../hooks/useCache';
+import { fetchGames, fetchTournaments, fetchPlatformStats } from '../lib/fetchers';
 
 function GameCard({ game }) {
   return (
@@ -96,50 +96,14 @@ function StatBlock({ icon: Icon, value, label }) {
 
 export default function HomePage() {
   const { user } = useAuth();
-  const [games, setGames] = useState([]);
-  const [tournaments, setTournaments] = useState([]);
-  const [stats, setStats] = useState({ users: 0, matches: 0, tournaments: 0 });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: games, loading: gamesLoading } = useCachedData('games', fetchGames, 10 * 60 * 1000);
+  const { data: tournaments, loading: tournamentsLoading } = useCachedData('tournaments', fetchTournaments, 5 * 60 * 1000);
+  const { data: stats } = useCachedData('platform_stats', fetchPlatformStats, 5 * 60 * 1000);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchData() {
-      try {
-        const [gamesData, tournamentsData, statsData] = await Promise.allSettled([
-          api.getGames(),
-          api.getTournaments(),
-          api.getPlatformStats(),
-        ]);
-
-        if (cancelled) return;
-
-        if (gamesData.status === 'fulfilled') {
-          setGames(Array.isArray(gamesData.value) ? gamesData.value.slice(0, 3) : []);
-        }
-        if (tournamentsData.status === 'fulfilled') {
-          setTournaments(
-            Array.isArray(tournamentsData.value) ? tournamentsData.value.slice(0, 4) : []
-          );
-        }
-        if (statsData.status === 'fulfilled' && statsData.value) {
-          setStats({
-            users: statsData.value.users || 0,
-            matches: statsData.value.matches || 0,
-            tournaments: statsData.value.tournaments || 0,
-          });
-        }
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchData();
-    return () => { cancelled = true; };
-  }, []);
+  const loading = gamesLoading || tournamentsLoading;
+  const displayGames = (games || []).slice(0, 3);
+  const displayTournaments = (tournaments || []).slice(0, 4);
+  const displayStats = stats || { users: 0, matches: 0, tournaments: 0 };
 
   return (
     <div className="min-h-screen">
@@ -206,9 +170,9 @@ export default function HomePage() {
       <section className="py-16 border-y border-surface-light/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-3 gap-8">
-            <StatBlock icon={Users} value={stats.users} label="Jogadores" />
-            <StatBlock icon={Swords} value={stats.matches} label="Partidas" />
-            <StatBlock icon={Trophy} value={stats.tournaments} label="Campeonatos" />
+            <StatBlock icon={Users} value={displayStats.users} label="Jogadores" />
+            <StatBlock icon={Swords} value={displayStats.matches} label="Partidas" />
+            <StatBlock icon={Trophy} value={displayStats.tournaments} label="Campeonatos" />
           </div>
         </div>
       </section>
@@ -234,18 +198,14 @@ export default function HomePage() {
             <div className="flex justify-center py-16">
               <Loader2 size={32} className="text-primary-light animate-spin" />
             </div>
-          ) : error ? (
-            <div className="text-center py-16">
-              <p className="text-danger">{error}</p>
-            </div>
-          ) : games.length === 0 ? (
+          ) : displayGames.length === 0 ? (
             <div className="text-center py-16">
               <Gamepad2 size={48} className="text-surface-lighter mx-auto mb-4" />
               <p className="text-gray-400">Nenhum jogo disponível no momento.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {games.map((game) => (
+              {displayGames.map((game) => (
                 <GameCard key={game.id || game.slug} game={game} />
               ))}
             </div>
@@ -283,14 +243,14 @@ export default function HomePage() {
             <div className="flex justify-center py-16">
               <Loader2 size={32} className="text-primary-light animate-spin" />
             </div>
-          ) : tournaments.length === 0 ? (
+          ) : displayTournaments.length === 0 ? (
             <div className="text-center py-16">
               <Trophy size={48} className="text-surface-lighter mx-auto mb-4" />
               <p className="text-gray-400">Nenhum campeonato disponível.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {tournaments.map((t) => (
+              {displayTournaments.map((t) => (
                 <TournamentCard key={t.id} tournament={t} />
               ))}
             </div>
