@@ -3,11 +3,38 @@ import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
+const CACHE_KEY = 'rua_auth_cache'
+
+function getCachedAuth() {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (!cached) return null
+    return JSON.parse(cached)
+  } catch {
+    return null
+  }
+}
+
+function setCachedAuth(user, profile) {
+  try {
+    if (user && profile) {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ user, profile }))
+    } else {
+      localStorage.removeItem(CACHE_KEY)
+    }
+  } catch {
+    // Ignora erros de storage
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const cached = getCachedAuth()
+
+  const [user, setUser] = useState(cached?.user ?? null)
+  const [profile, setProfile] = useState(cached?.profile ?? null)
   const [session, setSession] = useState(null)
-  const [loading, setLoading] = useState(true)
+  // Se tem cache, não mostra loading
+  const [loading, setLoading] = useState(!cached)
 
   const fetchProfile = useCallback(async (userId) => {
     const { data, error } = await supabase
@@ -19,6 +46,7 @@ export function AuthProvider({ children }) {
     if (error) {
       console.error('Error fetching profile:', error.message)
       setProfile(null)
+      setCachedAuth(null, null)
       return null
     }
 
@@ -35,16 +63,28 @@ export function AuthProvider({ children }) {
 
         if (error) {
           console.error('Error getting session:', error.message)
+          if (mounted) {
+            setUser(null)
+            setProfile(null)
+            setCachedAuth(null, null)
+          }
           return
         }
 
         if (!mounted) return
 
         setSession(currentSession)
-        setUser(currentSession?.user ?? null)
+        const currentUser = currentSession?.user ?? null
+        setUser(currentUser)
 
-        if (currentSession?.user) {
-          await fetchProfile(currentSession.user.id)
+        if (currentUser) {
+          const profileData = await fetchProfile(currentUser.id)
+          if (mounted) {
+            setCachedAuth(currentUser, profileData)
+          }
+        } else {
+          setProfile(null)
+          setCachedAuth(null, null)
         }
       } catch (err) {
         console.error('Unexpected error during auth initialization:', err)
@@ -62,12 +102,15 @@ export function AuthProvider({ children }) {
         if (!mounted) return
 
         setSession(newSession)
-        setUser(newSession?.user ?? null)
+        const newUser = newSession?.user ?? null
+        setUser(newUser)
 
-        if (newSession?.user) {
-          await fetchProfile(newSession.user.id)
+        if (newUser) {
+          const profileData = await fetchProfile(newUser.id)
+          setCachedAuth(newUser, profileData)
         } else {
           setProfile(null)
+          setCachedAuth(null, null)
         }
 
         if (event === 'INITIAL_SESSION') {
@@ -122,11 +165,10 @@ export function AuthProvider({ children }) {
   }, [])
 
   const signOut = useCallback(async () => {
-    // Limpa state imediatamente
     setUser(null)
     setProfile(null)
     setSession(null)
-    // Limpa localStorage antes do signOut para garantir que tokens não sobrevivam
+    setCachedAuth(null, null)
     for (const key of Object.keys(localStorage)) {
       if (key.startsWith('sb-')) {
         localStorage.removeItem(key)
@@ -137,7 +179,6 @@ export function AuthProvider({ children }) {
     } catch (err) {
       // Ignora erros - tokens já foram limpos
     }
-    // Força reload para limpar qualquer estado residual em memória
     window.location.href = '/'
   }, [])
 
@@ -164,6 +205,7 @@ export function AuthProvider({ children }) {
     if (error) throw error
 
     setProfile(data)
+    setCachedAuth(user, data)
     return data
   }, [user])
 
@@ -175,7 +217,6 @@ export function AuthProvider({ children }) {
     return !!user?.email_confirmed_at || profile?.email_verified === true
   }, [user, profile])
 
-  // null = still loading profile, true/false = determined
   const isProfileComplete = useMemo(() => {
     if (!user) return null
     if (!profile) return null
