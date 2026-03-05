@@ -46,14 +46,7 @@ export default function App() {
             <Route path="/games" element={<GamesPage />} />
             <Route path="/games/:slug" element={<GameDetailPage />} />
             <Route path="/tournaments" element={<TournamentsPage />} />
-            <Route
-              path="/lobbies"
-              element={
-                <ProtectedRoute>
-                  <LobbiesPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/lobbies" element={<LobbiesPage />} />
             <Route
               path="/lobbies/:id"
               element={
@@ -66,14 +59,7 @@ export default function App() {
             <Route path="/vip" element={<VipPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
-            <Route
-              path="/store"
-              element={
-                <ProtectedRoute>
-                  <StorePage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/store" element={<StorePage />} />
             <Route
               path="/profile"
               element={
