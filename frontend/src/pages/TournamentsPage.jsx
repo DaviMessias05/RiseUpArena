@@ -86,6 +86,8 @@ function TournamentCard({ tournament }) {
         <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1.5">
           <span>{tournament.game_name || 'Jogo'}</span>
           <span className="text-gray-600">•</span>
+          <span>{tournament.team_size}vs{tournament.team_size}</span>
+          <span className="text-gray-600">•</span>
           <span>{tournament.max_players || '?'} slots</span>
           {tournament.format && (
             <>

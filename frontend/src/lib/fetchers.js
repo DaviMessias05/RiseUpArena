@@ -25,7 +25,7 @@ export async function fetchGame(slug) {
 export async function fetchTournaments() {
   const { data, error } = await supabase
     .from('tournaments')
-    .select('*, games(name, slug)')
+    .select('*, games(name, slug, max_team_size)')
     .order('created_at', { ascending: false })
 
   if (error) throw error
@@ -33,6 +33,7 @@ export async function fetchTournaments() {
     ...t,
     game_name: t.games?.name || 'Jogo',
     game_slug: t.games?.slug,
+    team_size: t.team_size || t.games?.max_team_size || 5,
     prize_pool: t.prize_description || t.prize_pool,
     max_players: t.max_participants || t.max_players,
     current_players: t.current_participants || t.current_players || 0,
