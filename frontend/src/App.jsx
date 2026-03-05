@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import LoadingSpinner from './components/LoadingSpinner'
 import HomePage from './pages/HomePage'
+import { useAuth } from './contexts/AuthContext'
 
 // Lazy-loaded pages for bundle splitting
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'))
@@ -33,10 +34,11 @@ function PageLoader() {
 }
 
 export default function App() {
+  const { user } = useAuth()
   return (
     <div className="min-h-screen bg-bg">
       <Navbar />
-      <main className="pt-14">
+      <main className={`pt-14 ${user ? 'md:pr-64' : ''}`}>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<HomePage />} />

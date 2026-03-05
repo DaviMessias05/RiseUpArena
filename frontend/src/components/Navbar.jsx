@@ -45,7 +45,7 @@ export default function Navbar() {
     navigate('/');
   };
 
-  const displayName = profile?.username || user?.email?.split('@')[0] || 'Jogador';
+  const displayName = profile?.username || 'Jogador';
   const userRC = profile?.rise_coins ?? profile?.credits ?? 0;
   const userAC = profile?.arena_coins ?? 0;
   const avatarUrl = profile?.avatar_url;
@@ -89,29 +89,13 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <button
-              onClick={() => { setFriendsOpen(prev => !prev); setSocialOpen(false); }}
-              className={`px-4 py-2 text-sm font-medium transition-colors rounded-md ${
-                friendsOpen ? 'text-white bg-white/5' : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              Social
-            </button>
           </div>
 
           {/* Desktop Right Side */}
           <div className="hidden md:flex items-center gap-1 ml-auto">
-            {/* Notification Bell — sempre visível */}
+            {/* Notification Bell */}
             <button className="relative p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-colors">
               <Bell size={18} />
-            </button>
-
-            {/* Chat icon — sempre visível */}
-            <button
-              onClick={() => { setFriendsOpen(prev => !prev); setSocialOpen(false); }}
-              className={`relative p-2 rounded-lg transition-colors ${friendsOpen ? 'text-white bg-white/8' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
-            >
-              <MessageCircle size={18} />
             </button>
 
             {user ? (
@@ -197,8 +181,8 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Friends Bar — visível para todos (mostra "faça login" se não autenticado) */}
-      <FriendsBar isOpen={friendsOpen} onClose={() => setFriendsOpen(false)} />
+      {/* Friends Bar — só aparece quando logado */}
+      {user && <FriendsBar isOpen={friendsOpen} onClose={() => setFriendsOpen(false)} />}
 
       {/* Mobile Menu */}
       {mobileOpen && (
@@ -217,13 +201,6 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <button
-              onClick={() => { setFriendsOpen(prev => !prev); setMobileOpen(false); }}
-              className="block w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
-            >
-              Social
-            </button>
-
             <hr className="border-white/5 my-2" />
 
             {user ? (
