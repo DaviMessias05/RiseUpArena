@@ -37,6 +37,32 @@ function formatTournamentDate(dateStr) {
   return `${day}, ${time}`;
 }
 
+const PRIZE_TRUNCATE = 28;
+
+function PrizeOverlay({ prize }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = prize.length > PRIZE_TRUNCATE;
+
+  return (
+    <div className="absolute top-2 right-2 max-w-[45%]">
+      <div className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
+        <span className="text-[10px] text-gray-400">Premiação: </span>
+        <span className="text-[10px] text-yellow-400 font-semibold">
+          {isLong && !expanded ? prize.slice(0, PRIZE_TRUNCATE) + '…' : prize}
+        </span>
+        {isLong && (
+          <button
+            onClick={e => { e.preventDefault(); setExpanded(v => !v); }}
+            className="block text-[9px] text-blue-400 hover:text-blue-300 mt-0.5 underline"
+          >
+            {expanded ? 'ocultar' : 'ver detalhes'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function TournamentCard({ tournament }) {
   return (
     <div className="bg-surface rounded-xl border border-surface-light/50 hover:border-primary/50 transition-all duration-300 overflow-hidden">
@@ -66,10 +92,7 @@ function TournamentCard({ tournament }) {
           </div>
         )}
         {tournament.prize_pool && (
-          <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
-            <span className="text-[10px] text-gray-400">Premiação: </span>
-            <span className="text-[10px] text-yellow-400 font-semibold">{tournament.prize_pool}</span>
-          </div>
+          <PrizeOverlay prize={tournament.prize_pool} />
         )}
         {/* Game icon overlay */}
         <div className="absolute bottom-3 left-3 w-8 h-8 rounded-lg bg-surface/80 backdrop-blur-sm flex items-center justify-center border border-surface-light/50">

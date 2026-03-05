@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Trophy, Users, Swords, ArrowRight, Loader2, Lock, Target, Flame, Medal, Star, Crown, Zap, Award, Gamepad2, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCachedData } from '../hooks/useCache';
@@ -69,6 +69,32 @@ function formatTournamentDate(dateStr) {
   return `${day}, ${time}`;
 }
 
+const PRIZE_TRUNCATE = 28;
+
+function PrizeOverlay({ prize }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = prize.length > PRIZE_TRUNCATE;
+
+  return (
+    <div className="absolute top-2 right-2 max-w-[45%]">
+      <div className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
+        <span className="text-[10px] text-gray-400">Premiação: </span>
+        <span className="text-[10px] text-yellow-400 font-semibold">
+          {isLong && !expanded ? prize.slice(0, PRIZE_TRUNCATE) + '…' : prize}
+        </span>
+        {isLong && (
+          <button
+            onClick={e => { e.preventDefault(); setExpanded(v => !v); }}
+            className="block text-[9px] text-blue-400 hover:text-blue-300 mt-0.5 underline"
+          >
+            {expanded ? 'ocultar' : 'ver detalhes'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function TournamentCard({ tournament }) {
   return (
     <Link
@@ -101,10 +127,7 @@ function TournamentCard({ tournament }) {
           </div>
         )}
         {tournament.prize_pool && (
-          <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
-            <span className="text-[10px] text-gray-400">Premiação: </span>
-            <span className="text-[10px] text-yellow-400 font-semibold">{tournament.prize_pool}</span>
-          </div>
+          <PrizeOverlay prize={tournament.prize_pool} />
         )}
         <div className="absolute bottom-2 left-2 w-7 h-7 rounded-lg bg-surface/80 backdrop-blur-sm flex items-center justify-center border border-surface-light/50">
           <Gamepad2 size={14} className="text-gray-300" />
