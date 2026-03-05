@@ -1,6 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
-import { Trophy, Clock, Users, Gamepad2, ArrowLeft, Loader2, Calendar, Award, ChevronRight, ScrollText, X } from 'lucide-react';
+import {
+  Trophy, Users, Gamepad2, ArrowLeft, Loader2,
+  Calendar, Award, GitBranch, Medal, Clock, ScrollText,
+  CheckCircle2, MessageCircle, Send, Globe,
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -31,16 +35,45 @@ function formatDate(dateStr) {
     + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatDateShort(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }).toUpperCase()
+    + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatChatTime(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+const TABS = [
+  { id: 'overview', label: 'Visão Geral' },
+  { id: 'rules', label: 'Regras' },
+  { id: 'bracket', label: 'Chaves' },
+  { id: 'teams', label: 'Equipes' },
+  { id: 'results', label: 'Resultados' },
+  { id: 'chat', label: 'Chat' },
+];
+
 export default function TournamentDetailPage() {
   const { id } = useParams();
   const { hash } = useLocation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [tournament, setTournament] = useState(null);
   const [loading, setLoading] = useState(true);
   const [registered, setRegistered] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
-  const [showRules, setShowRules] = useState(false);
+  const [participants, setParticipants] = useState([]);
+  const [participantId, setParticipantId] = useState(null);
+  const [isReady, setIsReady] = useState(false);
+  const [readyCount, setReadyCount] = useState(0);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [messages, setMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatSending, setChatSending] = useState(false);
+  const chatEndRef = useRef(null);
 
   useEffect(() => {
     async function load() {
@@ -62,32 +95,73 @@ export default function TournamentDetailPage() {
         });
       }
 
-      // Count participants
-      const { count } = await supabase
+      const { data: parts } = await supabase
         .from('tournament_participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('tournament_id', id);
-      setParticipantCount(count || 0);
+        .select('id, created_at, status, profiles(username, display_name, avatar_url)')
+        .eq('tournament_id', id)
+        .order('created_at', { ascending: true });
+      const partsData = parts || [];
+      setParticipants(partsData);
+      setParticipantCount(partsData.length);
+      setReadyCount(partsData.filter(p => p.status === 'checked_in').length);
 
-      // Check if user is registered
       if (user) {
         const { data: reg } = await supabase
           .from('tournament_participants')
-          .select('id')
+          .select('id, status')
           .eq('tournament_id', id)
           .eq('user_id', user.id)
           .single();
-        setRegistered(!!reg);
+        if (reg) {
+          setRegistered(true);
+          setParticipantId(reg.id);
+          setIsReady(reg.status === 'checked_in');
+        }
       }
+
+      const { data: msgs } = await supabase
+        .from('chat_messages')
+        .select('id, content, created_at, user_id, profiles!user_id(username, display_name, avatar_url)')
+        .eq('channel_type', 'tournament')
+        .eq('channel_id', id)
+        .order('created_at', { ascending: true })
+        .limit(100);
+      setMessages(msgs || []);
 
       setLoading(false);
     }
+
     load();
+
+    const chatChannel = supabase
+      .channel(`tournament-chat-${id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `channel_id=eq.${id}` },
+        async (payload) => {
+          const msg = payload.new;
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('username, display_name, avatar_url')
+            .eq('id', msg.user_id)
+            .single();
+          setMessages(prev => [...prev, { ...msg, profiles: prof }]);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(chatChannel); };
   }, [id, user]);
 
-  // Scroll to prize section if hash is #prize
+  useEffect(() => {
+    if (activeTab === 'chat') {
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    }
+  }, [activeTab, messages]);
+
   useEffect(() => {
     if (hash === '#prize' && !loading) {
+      setActiveTab('overview');
       setTimeout(() => {
         document.getElementById('prize-section')?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
@@ -97,10 +171,41 @@ export default function TournamentDetailPage() {
   async function handleRegister() {
     if (!user || registered || registering) return;
     setRegistering(true);
-    await supabase.from('tournament_participants').insert({ tournament_id: id, user_id: user.id });
+    const { data } = await supabase
+      .from('tournament_participants')
+      .insert({ tournament_id: id, user_id: user.id })
+      .select('id')
+      .single();
     setRegistered(true);
+    setParticipantId(data?.id || null);
     setParticipantCount(c => c + 1);
     setRegistering(false);
+  }
+
+  async function handleReady() {
+    if (!participantId || isReady) return;
+    const { error } = await supabase
+      .from('tournament_participants')
+      .update({ status: 'checked_in' })
+      .eq('id', participantId);
+    if (!error) {
+      setIsReady(true);
+      setReadyCount(c => c + 1);
+    }
+  }
+
+  async function handleSendMessage(e) {
+    e.preventDefault();
+    if (!chatInput.trim() || chatSending || !user) return;
+    setChatSending(true);
+    await supabase.from('chat_messages').insert({
+      channel_type: 'tournament',
+      channel_id: id,
+      user_id: user.id,
+      content: chatInput.trim(),
+    });
+    setChatInput('');
+    setChatSending(false);
   }
 
   if (loading) {
@@ -125,7 +230,7 @@ export default function TournamentDetailPage() {
   const isFull = participantCount >= (tournament.max_players || Infinity);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Back */}
       <Link to="/tournaments" className="inline-flex items-center gap-1 text-gray-400 hover:text-white text-sm mb-6 transition-colors">
         <ArrowLeft size={16} />
@@ -141,50 +246,86 @@ export default function TournamentDetailPage() {
             <Trophy size={80} className="text-surface-lighter" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-        <div className="absolute bottom-4 left-6">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute bottom-4 left-6 right-6">
           <span className={`inline-block px-3 py-1 rounded-lg text-xs font-bold ${STATUS_COLORS[tournament.status] || 'bg-gray-500 text-white'}`}>
             {STATUS_LABELS[tournament.status] || tournament.status}
           </span>
           <h1 className="text-2xl sm:text-3xl font-black text-white mt-2">{tournament.name}</h1>
+          {tournament.start_date && (
+            <p className="text-gray-300 text-sm mt-1 flex items-center gap-1.5">
+              <Clock size={14} />
+              {formatDate(tournament.start_date)}
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main info */}
-        <div className="lg:col-span-2 space-y-6">
-          {showRules ? (
-            /* Rules panel */
-            <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <ScrollText size={20} className="text-primary-light" />
-                  <h2 className="text-lg font-bold text-white">Regras do Campeonato</h2>
-                </div>
-                <button
-                  onClick={() => setShowRules(false)}
-                  className="p-1.5 rounded-lg hover:bg-surface-light text-gray-400 hover:text-white transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              {tournament.rules ? (
-                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-line">{tournament.rules}</p>
-              ) : (
-                <p className="text-gray-500 text-sm italic">Nenhuma regra definida para este campeonato.</p>
+      {/* Tabs */}
+      <div className="border-b border-surface-light/50 mb-6">
+        <div className="flex gap-1 overflow-x-auto">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-5 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'border-primary-light text-primary-light'
+                  : 'border-transparent text-gray-400 hover:text-white'
+              }`}
+            >
+              {tab.label}
+              {tab.id === 'teams' && (
+                <span className="ml-1.5 text-[11px] bg-surface-light px-1.5 py-0.5 rounded-full text-gray-400">
+                  {participantCount}
+                </span>
               )}
-            </div>
-          ) : (
+              {tab.id === 'chat' && messages.length > 0 && (
+                <span className="ml-1.5 text-[11px] bg-primary/20 text-primary-light px-1.5 py-0.5 rounded-full">
+                  {messages.length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main content */}
+        <div className="lg:col-span-2 space-y-6">
+
+          {/* OVERVIEW TAB */}
+          {activeTab === 'overview' && (
             <>
+              {/* Format cards */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-surface rounded-xl border border-surface-light/50 p-4 text-center">
+                  <Gamepad2 size={22} className="text-primary-light mx-auto mb-2" />
+                  <p className="text-[10px] text-gray-500 uppercase font-semibold mb-1">Jogo</p>
+                  <p className="text-sm text-white font-bold">{tournament.game_name}</p>
+                </div>
+                <div className="bg-surface rounded-xl border border-surface-light/50 p-4 text-center">
+                  <Users size={22} className="text-primary-light mx-auto mb-2" />
+                  <p className="text-[10px] text-gray-500 uppercase font-semibold mb-1">Tamanho da Equipe</p>
+                  <p className="text-sm text-white font-bold">{tournament.team_size} × {tournament.team_size}</p>
+                </div>
+                <div className="bg-surface rounded-xl border border-surface-light/50 p-4 text-center">
+                  <GitBranch size={22} className="text-primary-light mx-auto mb-2" />
+                  <p className="text-[10px] text-gray-500 uppercase font-semibold mb-1">Formato</p>
+                  <p className="text-sm text-white font-bold">{FORMAT_LABELS[tournament.format] || tournament.format || '—'}</p>
+                </div>
+              </div>
+
               {/* Prize */}
               {tournament.prize_pool && (
                 <div id="prize-section" className="bg-surface rounded-2xl border border-yellow-500/30 p-6 scroll-mt-24">
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 mb-3">
                     <Award size={20} className="text-yellow-400" />
                     <h2 className="text-lg font-bold text-white">Premiação</h2>
                   </div>
                   <p className="text-yellow-400 font-semibold text-sm">
-                    1º lugar: {(() => {
+                    {(() => {
                       const matches = tournament.prize_pool.match(/[\d.,]+\s*RC/gi) || [];
                       if (matches.length === 0) return tournament.prize_pool;
                       const total = matches.reduce((acc, m) => {
@@ -197,57 +338,6 @@ export default function TournamentDetailPage() {
                 </div>
               )}
 
-              {/* Details card */}
-              <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
-                <h2 className="text-lg font-bold text-white mb-4">Detalhes</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3">
-                    <Gamepad2 size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-[11px] text-gray-500 uppercase font-semibold">Jogo</p>
-                      <p className="text-sm text-white font-medium">{tournament.game_name}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Users size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-[11px] text-gray-500 uppercase font-semibold">Formato</p>
-                      <p className="text-sm text-white font-medium">{tournament.team_size}vs{tournament.team_size}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Trophy size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-[11px] text-gray-500 uppercase font-semibold">Chaveamento</p>
-                      <p className="text-sm text-white font-medium">{FORMAT_LABELS[tournament.format] || tournament.format}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Users size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-[11px] text-gray-500 uppercase font-semibold">Vagas</p>
-                      <p className="text-sm text-white font-medium">{participantCount} / {tournament.max_players || '?'}</p>
-                    </div>
-                  </div>
-                  {tournament.start_date && (
-                    <div className="flex items-start gap-3 col-span-2">
-                      <Calendar size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-[11px] text-gray-500 uppercase font-semibold">Data de início</p>
-                        <p className="text-sm text-white font-medium">{formatDate(tournament.start_date)}</p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex items-start gap-3 col-span-2">
-                    <ChevronRight size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-[11px] text-gray-500 uppercase font-semibold">Nível requerido</p>
-                      <p className="text-sm text-white font-medium">{tournament.min_level ?? 1} → {tournament.max_level ?? 10}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Description */}
               {tournament.description && (
                 <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
@@ -257,11 +347,246 @@ export default function TournamentDetailPage() {
               )}
             </>
           )}
+
+          {/* RULES TAB */}
+          {activeTab === 'rules' && (
+            <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <ScrollText size={20} className="text-primary-light" />
+                <h2 className="text-lg font-bold text-white">Regras do Campeonato</h2>
+              </div>
+              {tournament.rules ? (
+                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-line">{tournament.rules}</p>
+              ) : (
+                <p className="text-gray-500 text-sm italic">Nenhuma regra definida para este campeonato.</p>
+              )}
+            </div>
+          )}
+
+          {/* BRACKET TAB */}
+          {activeTab === 'bracket' && (
+            <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <GitBranch size={20} className="text-primary-light" />
+                <h2 className="text-lg font-bold text-white">Chaveamento</h2>
+              </div>
+              <div className="text-center py-16">
+                <GitBranch size={52} className="text-surface-lighter mx-auto mb-4" />
+                <p className="text-gray-400 text-sm">O chaveamento será gerado quando o torneio começar.</p>
+              </div>
+            </div>
+          )}
+
+          {/* TEAMS TAB */}
+          {activeTab === 'teams' && (
+            <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Users size={20} className="text-primary-light" />
+                  <h2 className="text-lg font-bold text-white">Inscritos ({participantCount})</h2>
+                </div>
+                {readyCount > 0 && (
+                  <span className="text-xs text-success bg-success/10 border border-success/30 px-2 py-1 rounded-lg font-semibold">
+                    {readyCount} prontos
+                  </span>
+                )}
+              </div>
+              {participants.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users size={40} className="text-surface-lighter mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">Nenhum participante inscrito ainda.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {participants.map((p, idx) => (
+                    <div key={p.id} className="flex items-center gap-3 p-3 bg-surface-light/30 rounded-xl">
+                      <span className="text-gray-600 text-xs w-5 text-right flex-shrink-0">{idx + 1}</span>
+                      <div className="w-8 h-8 rounded-full bg-surface-light flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {p.profiles?.avatar_url ? (
+                          <img src={p.profiles.avatar_url} className="w-full h-full object-cover" alt="" />
+                        ) : (
+                          <Users size={14} className="text-gray-500" />
+                        )}
+                      </div>
+                      <span className="text-sm text-white font-medium flex-1">
+                        {p.profiles?.display_name || p.profiles?.username || 'Jogador'}
+                      </span>
+                      {p.status === 'checked_in' && (
+                        <span className="text-[10px] text-success bg-success/10 border border-success/30 px-1.5 py-0.5 rounded font-semibold flex items-center gap-1">
+                          <CheckCircle2 size={10} />
+                          PRONTO
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* RESULTS TAB */}
+          {activeTab === 'results' && (
+            <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Medal size={20} className="text-primary-light" />
+                <h2 className="text-lg font-bold text-white">Resultados</h2>
+              </div>
+              <div className="text-center py-16">
+                <Medal size={52} className="text-surface-lighter mx-auto mb-4" />
+                <p className="text-gray-400 text-sm">Os resultados serão exibidos após o término do torneio.</p>
+              </div>
+            </div>
+          )}
+
+          {/* CHAT TAB */}
+          {activeTab === 'chat' && (
+            <div className="bg-surface rounded-2xl border border-surface-light/50 flex flex-col" style={{ height: '520px' }}>
+              <div className="flex items-center gap-2 p-4 border-b border-surface-light/50 flex-shrink-0">
+                <MessageCircle size={18} className="text-primary-light" />
+                <h2 className="text-base font-bold text-white">Chat do Torneio</h2>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+                {messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full gap-3">
+                    <MessageCircle size={36} className="text-surface-lighter" />
+                    <p className="text-gray-500 text-sm">Nenhuma mensagem ainda. Seja o primeiro!</p>
+                  </div>
+                ) : (
+                  messages.map(msg => {
+                    const isMe = msg.user_id === user?.id;
+                    const name = msg.profiles?.display_name || msg.profiles?.username || 'Jogador';
+                    return (
+                      <div key={msg.id} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
+                        <div className="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
+                          {msg.profiles?.avatar_url ? (
+                            <img src={msg.profiles.avatar_url} className="w-full h-full object-cover" alt="" />
+                          ) : (
+                            <Users size={12} className="text-gray-500" />
+                          )}
+                        </div>
+                        <div className={`max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-0.5`}>
+                          <div className="flex items-baseline gap-1.5">
+                            {!isMe && <span className="text-[11px] font-semibold text-gray-400">{name}</span>}
+                            <span className="text-[10px] text-gray-600">{formatChatTime(msg.created_at)}</span>
+                          </div>
+                          <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed break-words ${
+                            isMe
+                              ? 'bg-primary text-white rounded-tr-sm'
+                              : 'bg-surface-light text-gray-200 rounded-tl-sm'
+                          }`}>
+                            {msg.content}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Input */}
+              <div className="p-3 border-t border-surface-light/50 flex-shrink-0">
+                {user ? (
+                  <form onSubmit={handleSendMessage} className="flex gap-2">
+                    <input
+                      value={chatInput}
+                      onChange={e => setChatInput(e.target.value)}
+                      maxLength={500}
+                      placeholder="Escreva uma mensagem..."
+                      className="flex-1 bg-surface-light rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 outline-none focus:ring-1 focus:ring-primary"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!chatInput.trim() || chatSending}
+                      className="px-3 py-2 bg-primary hover:bg-primary-light rounded-xl text-white transition-colors disabled:opacity-40 flex-shrink-0"
+                    >
+                      <Send size={16} />
+                    </button>
+                  </form>
+                ) : (
+                  <Link to="/auth/login" className="text-sm text-primary-light hover:underline">
+                    Faça login para participar do chat
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-4">
-          {/* Register */}
+          {/* Slot counter */}
+          <div className="bg-surface rounded-2xl border border-surface-light/50 p-5">
+            <h3 className="text-sm font-bold text-white mb-4">Equipes</h3>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-2xl font-black text-white">{participantCount}</p>
+                <p className="text-[11px] text-gray-500 mt-1">Inscritos</p>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-success">{readyCount}</p>
+                <p className="text-[11px] text-gray-500 mt-1">Prontos</p>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-primary-light">{tournament.max_players || '∞'}</p>
+                <p className="text-[11px] text-gray-500 mt-1">Vagas</p>
+              </div>
+            </div>
+            <div className="mt-4 w-full h-1.5 bg-surface-light rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#f28c38] to-[#e8611a] rounded-full"
+                style={{ width: `${Math.min((participantCount / (tournament.max_players || 1)) * 100, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Region */}
+          {tournament.region && (
+            <div className="bg-surface rounded-2xl border border-surface-light/50 p-5">
+              <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                <Globe size={15} className="text-primary-light" />
+                Região
+              </h3>
+              <p className="text-sm text-gray-300">{tournament.region}</p>
+            </div>
+          )}
+
+          {/* Timeline */}
+          {tournament.start_date && (
+            <div className="bg-surface rounded-2xl border border-surface-light/50 p-5">
+              <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <Calendar size={15} className="text-primary-light" />
+                Linha do Tempo
+              </h3>
+              <div className="space-y-1">
+                <div className="flex items-start gap-3">
+                  <div className="flex flex-col items-center mt-0.5">
+                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isOpen ? 'bg-success' : 'bg-gray-600'}`} />
+                    <div className="w-px h-7 bg-surface-light/60 mt-1" />
+                  </div>
+                  <div className="pb-3">
+                    <p className="text-xs font-semibold text-white leading-tight">
+                      Inscrições {isOpen ? 'Abertas' : 'Encerradas'}
+                    </p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      {isOpen ? 'Participe agora' : 'Encerradas'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-primary-light mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-white leading-tight">Início do Torneio</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{formatDateShort(tournament.start_date)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Registration */}
           <div className="bg-surface rounded-2xl border border-surface-light/50 p-5">
             <h3 className="text-base font-bold text-white mb-3">Inscrição</h3>
             {!user ? (
@@ -272,8 +597,26 @@ export default function TournamentDetailPage() {
                 Faça login para se inscrever
               </Link>
             ) : registered ? (
-              <div className="w-full py-3 bg-success/20 border border-success/40 text-success font-bold rounded-xl text-sm text-center">
-                ✓ Inscrito
+              <div className="space-y-2">
+                <div className="w-full py-3 bg-success/20 border border-success/40 text-success font-bold rounded-xl text-sm text-center">
+                  ✓ Inscrito
+                </div>
+                {isOpen && (
+                  isReady ? (
+                    <div className="w-full py-2.5 bg-success/10 border border-success/30 text-success font-semibold rounded-xl text-sm text-center flex items-center justify-center gap-2">
+                      <CheckCircle2 size={15} />
+                      Pronto para jogar!
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleReady}
+                      className="w-full py-2.5 border border-surface-light text-gray-300 hover:border-success/60 hover:text-success font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle2 size={15} />
+                      Marcar como Pronto
+                    </button>
+                  )
+                )}
               </div>
             ) : !isOpen ? (
               <div className="w-full py-3 bg-surface-light text-gray-500 font-bold rounded-xl text-sm text-center">
@@ -292,30 +635,7 @@ export default function TournamentDetailPage() {
                 {registering ? 'Inscrevendo...' : 'Inscrever-se'}
               </button>
             )}
-            <div className="mt-3 text-center">
-              <span className="text-xs text-gray-500">{participantCount} de {tournament.max_players || '?'} vagas preenchidas</span>
-            </div>
-            {/* Progress bar */}
-            <div className="mt-2 w-full h-1.5 bg-surface-light rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-[#f28c38] to-[#e8611a] rounded-full"
-                style={{ width: `${Math.min((participantCount / (tournament.max_players || 1)) * 100, 100)}%` }}
-              />
-            </div>
           </div>
-
-          {/* Rules button */}
-          <button
-            onClick={() => setShowRules(v => !v)}
-            className={`w-full flex items-center justify-center gap-2 py-3 border font-semibold rounded-2xl text-sm transition-all ${
-              showRules
-                ? 'bg-primary/10 border-primary/50 text-primary-light'
-                : 'bg-surface border-surface-light/50 hover:border-primary/50 text-gray-300 hover:text-white'
-            }`}
-          >
-            <ScrollText size={16} />
-            {showRules ? 'Fechar Regras' : 'Ver Regras'}
-          </button>
         </div>
       </div>
     </div>
