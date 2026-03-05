@@ -120,19 +120,6 @@ function TournamentCard({ tournament }) {
   );
 }
 
-const LEVELS_INFO = [
-  { level: 1, minRP: 0, color: 'text-slate-400', bg: 'bg-slate-400/10', border: 'border-slate-400/30' },
-  { level: 2, minRP: 101, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/30' },
-  { level: 3, minRP: 301, color: 'text-cyan-400', bg: 'bg-cyan-400/10', border: 'border-cyan-400/30' },
-  { level: 4, minRP: 601, color: 'text-teal-400', bg: 'bg-teal-400/10', border: 'border-teal-400/30' },
-  { level: 5, minRP: 901, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30' },
-  { level: 6, minRP: 1301, color: 'text-lime-400', bg: 'bg-lime-400/10', border: 'border-lime-400/30' },
-  { level: 7, minRP: 1701, color: 'text-yellow-400', bg: 'bg-yellow-400/10', border: 'border-yellow-400/30' },
-  { level: 8, minRP: 2101, color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/30' },
-  { level: 9, minRP: 2501, color: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/30' },
-  { level: 10, minRP: 3000, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30' },
-];
-
 function getLevelInfo(rp) {
   if (rp >= 3000) return { level: 10, label: 'Nível 10', color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30' };
   if (rp >= 2501) return { level: 9, label: 'Nível 9', color: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/30' };
@@ -287,22 +274,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      {/* Levels Info Section */}
-      <section className="py-16 bg-surface/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-xl font-bold text-white text-center mb-2">Sistema de Níveis</h2>
-          <p className="text-gray-400 text-center text-sm mb-6">Suba de nível vencendo partidas e campeonatos</p>
-          <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 max-w-4xl mx-auto">
-            {LEVELS_INFO.map((lvl) => (
-              <div key={lvl.level} className={`text-center p-2 rounded-xl border ${lvl.border} ${lvl.bg}`}>
-                <div className={`text-2xl font-black ${lvl.color}`}>{lvl.level}</div>
-                <div className="text-[10px] text-gray-500 mt-0.5">{lvl.minRP}+ RP</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Achievements Section */}
       <section className="py-20">

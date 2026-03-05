@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import {
+  Coins,
   CheckCircle,
   Zap,
   Star,
