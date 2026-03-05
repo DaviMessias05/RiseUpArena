@@ -135,43 +135,39 @@ function getLevelInfo(rp) {
 
 const LEVEL_THRESHOLDS = [0, 101, 301, 601, 901, 1301, 1701, 2101, 2501, 3000];
 
-const RING_COLOR_MAP = {
-  'text-slate-400': '#94a3b8',
-  'text-blue-400': '#60a5fa',
-  'text-cyan-400': '#22d3ee',
-  'text-teal-400': '#2dd4bf',
-  'text-emerald-400': '#34d399',
-  'text-lime-400': '#a3e635',
-  'text-yellow-400': '#facc15',
-  'text-amber-400': '#fbbf24',
-  'text-orange-400': '#fb923c',
-  'text-red-500': '#ef4444',
+const BAR_COLOR_MAP = {
+  'text-slate-400': 'bg-slate-400',
+  'text-blue-400': 'bg-blue-400',
+  'text-cyan-400': 'bg-cyan-400',
+  'text-teal-400': 'bg-teal-400',
+  'text-emerald-400': 'bg-emerald-400',
+  'text-lime-400': 'bg-lime-400',
+  'text-yellow-400': 'bg-yellow-400',
+  'text-amber-400': 'bg-amber-400',
+  'text-orange-400': 'bg-orange-400',
+  'text-red-500': 'bg-red-500',
 };
 
-function LevelRing({ level, rp, color }) {
-  const size = 96;
-  const strokeWidth = 7;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
+function LevelProgressBar({ level, rp, color }) {
   const currentMin = LEVEL_THRESHOLDS[level - 1] ?? 0;
   const nextMin = LEVEL_THRESHOLDS[level] ?? 3000;
-  const progress = level >= 10 ? 1 : Math.min((rp - currentMin) / (nextMin - currentMin), 1);
-  const dashOffset = circumference * (1 - progress);
-  const stroke = RING_COLOR_MAP[color] || '#94a3b8';
+  const isMax = level >= 10;
+  const progress = isMax ? 100 : Math.min(((rp - currentMin) / (nextMin - currentMin)) * 100, 100);
+  const barColor = BAR_COLOR_MAP[color] || 'bg-slate-400';
 
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="absolute -rotate-90">
-        <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="#1e293b" strokeWidth={strokeWidth} />
-        <circle
-          cx={size/2} cy={size/2} r={radius}
-          fill="none" stroke={stroke} strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          strokeLinecap="round"
+    <div className="w-full mt-1">
+      <div className="w-full h-2 bg-surface-light rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+          style={{ width: `${progress}%` }}
         />
-      </svg>
-      <span className={`text-3xl font-black ${color} z-10`}>{level}</span>
+      </div>
+      <div className="flex justify-between mt-1">
+        <span className="text-[10px] text-gray-600">{currentMin} RP</span>
+        <span className={`text-[10px] font-semibold ${color}`}>{rp} RP</span>
+        <span className="text-[10px] text-gray-600">{isMax ? 'MAX' : `${nextMin} RP`}</span>
+      </div>
     </div>
   );
 }
@@ -185,11 +181,15 @@ function GameLevelCard({ ranking }) {
   const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
 
   return (
-    <div className={`bg-surface rounded-xl border ${tier.border} p-4 flex flex-col items-center gap-2`}>
-      <span className="text-xs font-semibold text-gray-400">{ranking.game_name}</span>
-      <LevelRing level={tier.level} rp={rp} color={tier.color} />
-      <span className={`text-xs font-semibold ${tier.color}`}>{tier.label}</span>
-      <div className="text-[11px] text-gray-500">{rp} RP • {winRate}% WR</div>
+    <div className={`bg-surface rounded-xl border ${tier.border} p-4 flex flex-col gap-2`}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-gray-400">{ranking.game_name}</span>
+        <span className="text-[11px] text-gray-500">{winRate}% WR</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className={`text-4xl font-black ${tier.color}`}>{tier.level}</div>
+      </div>
+      <LevelProgressBar level={tier.level} rp={rp} color={tier.color} />
     </div>
   );
 }
@@ -197,11 +197,15 @@ function GameLevelCard({ ranking }) {
 function UnrankedGameCard({ game }) {
   const tier = getLevelInfo(0);
   return (
-    <div className={`bg-surface rounded-xl border ${tier.border} p-4 flex flex-col items-center gap-2`}>
-      <span className="text-xs font-semibold text-gray-400">{game.name}</span>
-      <LevelRing level={1} rp={0} color={tier.color} />
-      <span className={`text-xs font-semibold ${tier.color}`}>{tier.label}</span>
-      <div className="text-[11px] text-gray-500">0 RP • 0% WR</div>
+    <div className={`bg-surface rounded-xl border ${tier.border} p-4 flex flex-col gap-2`}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-gray-400">{game.name}</span>
+        <span className="text-[11px] text-gray-500">0% WR</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className={`text-4xl font-black ${tier.color}`}>1</div>
+      </div>
+      <LevelProgressBar level={1} rp={0} color={tier.color} />
     </div>
   );
 }
