@@ -69,10 +69,9 @@ function formatTournamentDate(dateStr) {
   return `${day}, ${time}`;
 }
 
-const PRIZE_TRUNCATE = 28;
+const PRIZE_TRUNCATE = 15;
 
-function PrizeOverlay({ prize }) {
-  const [expanded, setExpanded] = useState(false);
+function PrizeOverlay({ prize, tournamentId }) {
   const isLong = prize.length > PRIZE_TRUNCATE;
 
   return (
@@ -80,15 +79,16 @@ function PrizeOverlay({ prize }) {
       <div className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
         <span className="text-[10px] text-gray-400">Premiação: </span>
         <span className="text-[10px] text-yellow-400 font-semibold">
-          {isLong && !expanded ? prize.slice(0, PRIZE_TRUNCATE) + '…' : prize}
+          {isLong ? prize.slice(0, PRIZE_TRUNCATE) + '…' : prize}
         </span>
         {isLong && (
-          <button
-            onClick={e => { e.preventDefault(); setExpanded(v => !v); }}
+          <Link
+            to={`/tournaments/${tournamentId}#prize`}
+            onClick={e => e.stopPropagation()}
             className="block text-[9px] text-blue-400 hover:text-blue-300 mt-0.5 underline"
           >
-            {expanded ? 'ocultar' : 'ver detalhes'}
-          </button>
+            ver detalhes
+          </Link>
         )}
       </div>
     </div>
@@ -98,7 +98,7 @@ function PrizeOverlay({ prize }) {
 function TournamentCard({ tournament }) {
   return (
     <Link
-      to="/tournaments"
+      to={`/tournaments/${tournament.id}`}
       className="bg-surface rounded-xl border border-surface-light/50 hover:border-primary/50 transition-all duration-300 overflow-hidden block"
     >
       {/* Banner */}
@@ -127,7 +127,7 @@ function TournamentCard({ tournament }) {
           </div>
         )}
         {tournament.prize_pool && (
-          <PrizeOverlay prize={tournament.prize_pool} />
+          <PrizeOverlay prize={tournament.prize_pool} tournamentId={tournament.id} />
         )}
         <div className="absolute bottom-2 left-2 w-7 h-7 rounded-lg bg-surface/80 backdrop-blur-sm flex items-center justify-center border border-surface-light/50">
           <Gamepad2 size={14} className="text-gray-300" />
@@ -218,12 +218,12 @@ function GameLevelCard({ ranking }) {
   const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
 
   return (
-    <div className={`bg-surface rounded-xl border ${tier.border} p-4 flex flex-col gap-2`}>
+    <div className="p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-gray-400">{ranking.game_name}</span>
         <span className="text-[11px] text-gray-500">{winRate}% WR</span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="text-center">
         <div className={`text-4xl font-black ${tier.color}`}>{tier.level}</div>
       </div>
       <LevelProgressBar level={tier.level} rp={rp} color={tier.color} />
@@ -234,12 +234,12 @@ function GameLevelCard({ ranking }) {
 function UnrankedGameCard({ game }) {
   const tier = getLevelInfo(0);
   return (
-    <div className={`bg-surface rounded-xl border ${tier.border} p-4 flex flex-col gap-2`}>
+    <div className="p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-gray-400">{game.name}</span>
         <span className="text-[11px] text-gray-500">0% WR</span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="text-center">
         <div className={`text-4xl font-black ${tier.color}`}>1</div>
       </div>
       <LevelProgressBar level={1} rp={0} color={tier.color} />

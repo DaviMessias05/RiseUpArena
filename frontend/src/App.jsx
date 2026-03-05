@@ -13,6 +13,7 @@ const CompleteProfilePage = lazy(() => import('./pages/auth/CompleteProfilePage'
 const GamesPage = lazy(() => import('./pages/GamesPage'))
 const GameDetailPage = lazy(() => import('./pages/GameDetailPage'))
 const TournamentsPage = lazy(() => import('./pages/TournamentsPage'))
+const TournamentDetailPage = lazy(() => import('./pages/TournamentDetailPage'))
 // const LobbiesPage = lazy(() => import('./pages/LobbiesPage'))
 // const LobbyDetailPage = lazy(() => import('./pages/LobbyDetailPage'))
 const RankingsPage = lazy(() => import('./pages/RankingsPage'))
@@ -46,6 +47,7 @@ export default function App() {
             <Route path="/games" element={<GamesPage />} />
             <Route path="/games/:slug" element={<GameDetailPage />} />
             <Route path="/tournaments" element={<TournamentsPage />} />
+            <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
             {/* Lobbies desativado temporariamente */}
             {/* <Route path="/lobbies" element={<LobbiesPage />} />
             <Route

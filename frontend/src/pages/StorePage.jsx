@@ -109,9 +109,9 @@ function RCPackageCard({ pkg, user }) {
           ) : (
             <Link
               to="/auth/login"
-              className="w-full py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 bg-surface-light hover:bg-surface-lighter text-gray-400 border border-surface-lighter"
+              className={`w-full py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 bg-gradient-to-r ${pkg.color} hover:opacity-90 text-white shadow-lg ${pkg.shadow}`}
             >
-              Faça login para comprar
+              R$ {pkg.price}
             </Link>
           )}
         </div>

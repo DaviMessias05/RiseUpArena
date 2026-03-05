@@ -1,4 +1,5 @@
 import { Crown, Check, Star, Shield, Zap } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const PAYMENT_LINKS = {
@@ -171,7 +172,7 @@ export default function VipPage() {
                   >
                     Plano Atual
                   </button>
-                ) : (
+                ) : user ? (
                   <a
                     href={PAYMENT_LINKS[plan.tier]}
                     target="_blank"
@@ -185,6 +186,18 @@ export default function VipPage() {
                     <Zap size={18} />
                     Assinar
                   </a>
+                ) : (
+                  <Link
+                    to="/auth/login"
+                    className={`w-full py-3 font-bold rounded-xl transition-colors flex items-center justify-center gap-2 ${
+                      plan.popular
+                        ? 'bg-primary hover:bg-primary-light text-white'
+                        : 'bg-surface-light hover:bg-surface-lighter text-white border border-surface-lighter'
+                    }`}
+                  >
+                    <Zap size={18} />
+                    Assinar
+                  </Link>
                 )}
               </div>
             </div>
