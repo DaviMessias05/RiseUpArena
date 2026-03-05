@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Loader2,
   Coins,
   AlertCircle,
   CheckCircle,
@@ -11,7 +10,14 @@ import {
   Rocket,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import * as api from '../lib/api';
+
+const PAYMENT_LINKS = {
+  starter: 'https://buy.stripe.com/4gM28s7DvafP3Xo1se1VK00',
+  popular: 'https://buy.stripe.com/aFa3cw6zr3RrgKa7QC1VK01',
+  pro: 'https://buy.stripe.com/6oUdRaf5X9bLfG65Iu1VK02',
+  elite: 'https://buy.stripe.com/4gM4gA1f7bjT3Xob2O1VK03',
+  ultra: 'https://buy.stripe.com/aFadRa5vn2Nn2Tk6My1VK04',
+};
 
 const RC_PACKAGES = [
   {
@@ -70,7 +76,7 @@ function formatNumber(n) {
   return n.toLocaleString('pt-BR');
 }
 
-function RCPackageCard({ pkg, onBuy, buying }) {
+function RCPackageCard({ pkg }) {
   const Icon = pkg.icon;
   const pricePerRC = ((pkg.price / pkg.rc) * 1000).toFixed(2);
 
@@ -92,13 +98,14 @@ function RCPackageCard({ pkg, onBuy, buying }) {
         </div>
         <p className="text-xs text-gray-500 mt-1">R$ {pricePerRC} por 1.000 RC</p>
         <div className="mt-auto pt-5">
-          <button
-            onClick={() => onBuy(pkg)}
-            disabled={buying}
-            className={`w-full py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r ${pkg.color} hover:opacity-90 text-white shadow-lg ${pkg.shadow}`}
+          <a
+            href={PAYMENT_LINKS[pkg.id]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`w-full py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 bg-gradient-to-r ${pkg.color} hover:opacity-90 text-white shadow-lg ${pkg.shadow}`}
           >
-            {buying ? <Loader2 size={18} className="animate-spin" /> : <>R$ {pkg.price}</>}
-          </button>
+            R$ {pkg.price}
+          </a>
         </div>
       </div>
     </div>
@@ -107,36 +114,12 @@ function RCPackageCard({ pkg, onBuy, buying }) {
 
 export default function StorePage() {
   const { user, profile } = useAuth();
-  const [buyingPkg, setBuyingPkg] = useState(null);
-  const [buyError, setBuyError] = useState(null);
 
   const userRC = profile?.rise_coins || 0;
   const userAC = profile?.arena_coins || 0;
 
-  // Read success/cancel from URL params
   const params = new URLSearchParams(window.location.search);
   const successType = params.get('success');
-  const cancelled = params.get('cancelled');
-
-  async function handleBuyRC(pkg) {
-    if (!user) {
-      setBuyError('Você precisa estar logado para comprar.');
-      setTimeout(() => setBuyError(null), 4000);
-      return;
-    }
-
-    setBuyingPkg(pkg.id);
-    setBuyError(null);
-
-    try {
-      const { url } = await api.apiPost('/stripe/checkout-rc', { package_id: pkg.id });
-      window.location.href = url;
-    } catch (err) {
-      setBuyError(err.message || 'Erro ao iniciar pagamento.');
-      setTimeout(() => setBuyError(null), 4000);
-      setBuyingPkg(null);
-    }
-  }
 
   return (
     <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -166,21 +149,7 @@ export default function StorePage() {
       {successType === 'rc' && (
         <div className="mb-6 p-4 bg-success/10 border border-success/30 rounded-xl flex items-center gap-3">
           <CheckCircle size={20} className="text-success flex-shrink-0" />
-          <p className="text-sm text-success">Pagamento confirmado! Seus Rise Coins serão adicionados em instantes.</p>
-        </div>
-      )}
-
-      {cancelled && (
-        <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-center gap-3">
-          <AlertCircle size={20} className="text-yellow-400 flex-shrink-0" />
-          <p className="text-sm text-yellow-400">Pagamento cancelado.</p>
-        </div>
-      )}
-
-      {buyError && (
-        <div className="mb-6 p-4 bg-danger/10 border border-danger/30 rounded-xl flex items-center gap-3">
-          <AlertCircle size={20} className="text-danger flex-shrink-0" />
-          <p className="text-sm text-danger">{buyError}</p>
+          <p className="text-sm text-success">Pagamento confirmado! Seus Rise Coins serão adicionados em breve.</p>
         </div>
       )}
 
@@ -213,7 +182,7 @@ export default function StorePage() {
       <h2 className="text-xl font-bold text-white mb-4">Pacotes de Rise Coins</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
         {RC_PACKAGES.map((pkg) => (
-          <RCPackageCard key={pkg.id} pkg={pkg} onBuy={handleBuyRC} buying={buyingPkg === pkg.id} />
+          <RCPackageCard key={pkg.id} pkg={pkg} />
         ))}
       </div>
 

@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Crown, Check, Star, Shield, Zap, Loader2, AlertCircle } from 'lucide-react';
+import { Crown, Check, Star, Shield, Zap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import * as api from '../lib/api';
+
+const PAYMENT_LINKS = {
+  bronze: 'https://buy.stripe.com/eVq8wQ3nf87H9hI8UG1VK05',
+  silver: 'https://buy.stripe.com/28EeVebTLbjTalMc6S1VK06',
+  premium: 'https://buy.stripe.com/dRm7sMcXP1JjdxYgn81VK07',
+};
 
 const PLANS = [
   {
@@ -11,7 +15,6 @@ const PLANS = [
     priceLabel: '/mês',
     color: 'from-orange-500 to-orange-700',
     borderColor: 'border-orange-500/30',
-    badgeColor: 'text-orange-400 bg-orange-400/10',
     icon: Shield,
     benefits: [
       'Badge VIP Bronze no perfil',
@@ -20,8 +23,6 @@ const PLANS = [
       'Prioridade no matchmaking',
       'Destaque no ranking',
     ],
-    matchDiscount: null,
-    tournamentDiscount: null,
   },
   {
     tier: 'silver',
@@ -30,7 +31,6 @@ const PLANS = [
     priceLabel: '/mês',
     color: 'from-gray-300 to-gray-500',
     borderColor: 'border-gray-300/30',
-    badgeColor: 'text-gray-300 bg-gray-300/10',
     icon: Star,
     popular: true,
     benefits: [
@@ -38,8 +38,6 @@ const PLANS = [
       'Badge VIP Silver no perfil',
       '2,5% de desconto em partidas',
     ],
-    matchDiscount: '2,5%',
-    tournamentDiscount: null,
   },
   {
     tier: 'premium',
@@ -48,7 +46,6 @@ const PLANS = [
     priceLabel: '/mês',
     color: 'from-yellow-400 to-yellow-600',
     borderColor: 'border-yellow-400/30',
-    badgeColor: 'text-yellow-400 bg-yellow-400/10',
     icon: Crown,
     benefits: [
       'Todos benefícios do Silver',
@@ -59,12 +56,10 @@ const PLANS = [
       '5% de desconto em partidas',
       '5% de desconto em campeonatos',
     ],
-    matchDiscount: '5%',
-    tournamentDiscount: '5%',
   },
 ];
 
-function VipBadge({ tier, size = 'md' }) {
+export function VipBadge({ tier, size = 'md' }) {
   const config = {
     bronze: { label: 'VIP Bronze', color: 'text-orange-400 bg-orange-400/10 border-orange-400/30' },
     silver: { label: 'VIP Silver', color: 'text-gray-300 bg-gray-300/10 border-gray-300/30' },
@@ -84,55 +79,15 @@ function VipBadge({ tier, size = 'md' }) {
   );
 }
 
-export { VipBadge };
-
 export default function VipPage() {
   const { user, profile } = useAuth();
-  const [vipStatus, setVipStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [buyingTier, setBuyingTier] = useState(null);
-  const [buyError, setBuyError] = useState(null);
 
   const params = new URLSearchParams(window.location.search);
   const successVip = params.get('success') === 'vip';
 
-  useEffect(() => {
-    async function fetchStatus() {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const status = await api.getVipStatus();
-        setVipStatus(status);
-      } catch {
-        // Ignora erro se não autenticado
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchStatus();
-  }, [user]);
-
-  async function handleSubscribe(plan) {
-    if (!user) {
-      setBuyError('Você precisa estar logado para assinar.');
-      setTimeout(() => setBuyError(null), 4000);
-      return;
-    }
-
-    setBuyingTier(plan.tier);
-    setBuyError(null);
-
-    try {
-      const { url } = await api.apiPost('/stripe/checkout-vip', { plan_id: `vip_${plan.tier}` });
-      window.location.href = url;
-    } catch (err) {
-      setBuyError(err.message || 'Erro ao iniciar pagamento.');
-      setTimeout(() => setBuyError(null), 4000);
-      setBuyingTier(null);
-    }
-  }
+  const currentTier = profile?.vip_tier;
+  const vipExpiresAt = profile?.vip_expires_at;
+  const isVipActive = currentTier && vipExpiresAt && new Date(vipExpiresAt) > new Date();
 
   return (
     <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -153,25 +108,18 @@ export default function VipPage() {
       {successVip && (
         <div className="mb-6 p-4 bg-success/10 border border-success/30 rounded-xl flex items-center gap-3">
           <Check size={20} className="text-success flex-shrink-0" />
-          <p className="text-sm text-success">Pagamento confirmado! Seu plano VIP será ativado em instantes.</p>
-        </div>
-      )}
-
-      {buyError && (
-        <div className="mb-6 p-4 bg-danger/10 border border-danger/30 rounded-xl flex items-center gap-3">
-          <AlertCircle size={20} className="text-danger flex-shrink-0" />
-          <p className="text-sm text-danger">{buyError}</p>
+          <p className="text-sm text-success">Pagamento confirmado! Seu plano VIP será ativado em breve.</p>
         </div>
       )}
 
       {/* Current VIP status */}
-      {vipStatus?.is_active && (
+      {isVipActive && (
         <div className="mb-8 p-5 bg-surface rounded-xl border border-yellow-400/30 flex items-center gap-4">
           <Crown size={32} className="text-yellow-400" />
           <div>
-            <p className="text-white font-bold">Seu plano atual: <VipBadge tier={vipStatus.vip_tier} /></p>
+            <p className="text-white font-bold">Seu plano atual: <VipBadge tier={currentTier} /></p>
             <p className="text-sm text-gray-400 mt-1">
-              Expira em {new Date(vipStatus.vip_expires_at).toLocaleDateString('pt-BR')}
+              Expira em {new Date(vipExpiresAt).toLocaleDateString('pt-BR')}
             </p>
           </div>
         </div>
@@ -181,7 +129,7 @@ export default function VipPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         {PLANS.map((plan) => {
           const Icon = plan.icon;
-          const isCurrentPlan = vipStatus?.is_active && vipStatus.vip_tier === plan.tier;
+          const isCurrentPlan = isVipActive && currentTier === plan.tier;
 
           return (
             <div
@@ -224,24 +172,19 @@ export default function VipPage() {
                     Plano Atual
                   </button>
                 ) : (
-                  <button
-                    onClick={() => handleSubscribe(plan)}
-                    disabled={buyingTier === plan.tier}
-                    className={`w-full py-3 font-bold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  <a
+                    href={PAYMENT_LINKS[plan.tier]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`w-full py-3 font-bold rounded-xl transition-colors flex items-center justify-center gap-2 ${
                       plan.popular
                         ? 'bg-primary hover:bg-primary-light text-white'
                         : 'bg-surface-light hover:bg-surface-lighter text-white border border-surface-lighter'
                     }`}
                   >
-                    {buyingTier === plan.tier ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                      <>
-                        <Zap size={18} />
-                        Assinar
-                      </>
-                    )}
-                  </button>
+                    <Zap size={18} />
+                    Assinar
+                  </a>
                 )}
               </div>
             </div>
