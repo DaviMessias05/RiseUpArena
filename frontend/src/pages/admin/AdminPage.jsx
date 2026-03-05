@@ -915,7 +915,7 @@ function StoreTab() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1">
-                Preço (creditos)
+                Preço (créditos)
               </label>
               <input
                 type="number"

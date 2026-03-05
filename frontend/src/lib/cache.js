@@ -27,12 +27,28 @@ export function getCache(key) {
 }
 
 export function setCache(key, data, ttlMs = 60 * 1000) {
-  const entry = { data, expiresAt: Date.now() + ttlMs }
+  const entry = { data, cachedAt: Date.now(), expiresAt: Date.now() + ttlMs }
   memoryCache.set(key, entry)
   try {
     localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(entry))
   } catch {
     // Storage full or unavailable
+  }
+}
+
+export function getCacheAge(key) {
+  const mem = memoryCache.get(key)
+  if (mem && Date.now() < mem.expiresAt) {
+    return Date.now() - (mem.cachedAt || 0)
+  }
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + key)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (Date.now() >= parsed.expiresAt) return null
+    return Date.now() - (parsed.cachedAt || 0)
+  } catch {
+    return null
   }
 }
 

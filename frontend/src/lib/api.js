@@ -32,16 +32,17 @@ async function fetchWithRetry(url, options, retries = 1) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), attempt === 0 ? 15000 : 30000)
+      // 8s first attempt, 12s retry — total max 20s before error
+      const timeout = setTimeout(() => controller.abort(), attempt === 0 ? 8000 : 12000)
       const response = await fetch(url, { ...options, signal: controller.signal })
       clearTimeout(timeout)
       return response
     } catch (err) {
       if (attempt < retries) continue
       if (err.name === 'AbortError') {
-        throw new Error('O servidor está iniciando, tente novamente em alguns segundos.')
+        throw new Error('Servidor indisponível. Tente novamente em instantes.')
       }
-      throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.')
+      throw new Error('Sem conexão com o servidor. Verifique sua internet.')
     }
   }
 }
@@ -142,8 +143,8 @@ export function getLobby(id) {
   return apiGet(`/lobbies/${encodeURIComponent(id)}`)
 }
 
-export function joinLobby(id) {
-  return apiPost(`/lobbies/${encodeURIComponent(id)}/join`)
+export function joinLobby(id, team) {
+  return apiPost(`/lobbies/${encodeURIComponent(id)}/join`, team != null ? { team } : undefined)
 }
 
 export function leaveLobby(id) {

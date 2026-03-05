@@ -2,11 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Send } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRealtime } from '../contexts/RealtimeContext';
-import { sendChatMessage, getChatMessages } from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 function formatTimestamp(dateStr) {
   const date = new Date(dateStr);
-  return date.toLocaleTimeString('en-US', {
+  return date.toLocaleTimeString('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -14,7 +14,7 @@ function formatTimestamp(dateStr) {
 
 export default function ChatPanel({ channelType, channelId }) {
   const { user } = useAuth();
-  const { subscribe, unsubscribe } = useRealtime();
+  const { subscribeChat } = useRealtime();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -37,39 +37,54 @@ export default function ChatPanel({ channelType, channelId }) {
     async function fetchMessages() {
       try {
         setLoading(true);
-        const data = await getChatMessages(channelType, channelId);
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('id, content, created_at, user_id, profiles(username, display_name)')
+          .eq('channel_type', channelType)
+          .eq('channel_id', channelId)
+          .order('created_at', { ascending: true })
+          .limit(100);
+        if (error) throw error;
         if (!cancelled) {
-          setMessages(Array.isArray(data) ? data : []);
+          setMessages(
+            (data || []).map((msg) => ({
+              ...msg,
+              username: msg.profiles?.username || msg.profiles?.display_name,
+            }))
+          );
         }
       } catch (err) {
-        console.error('Failed to fetch chat messages:', err);
+        console.error('Erro ao carregar mensagens:', err);
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchMessages();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [channelType, channelId]);
 
   // Subscribe to realtime messages
   useEffect(() => {
-    const channel = `${channelType}:${channelId}`;
+    const cleanup = subscribeChat(channelType, channelId, async ({ message }) => {
+      const { data } = await supabase
+        .from('chat_messages')
+        .select('id, content, created_at, user_id, profiles(username, display_name)')
+        .eq('id', message.id)
+        .single();
 
-    const handleMessage = (message) => {
-      setMessages((prev) => [...prev, message]);
-    };
+      const mapped = data
+        ? { ...data, username: data.profiles?.username || data.profiles?.display_name }
+        : message;
 
-    subscribe(channel, handleMessage);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === mapped.id)) return prev;
+        return [...prev, mapped];
+      });
+    });
 
-    return () => {
-      unsubscribe(channel, handleMessage);
-    };
-  }, [channelType, channelId, subscribe, unsubscribe]);
+    return cleanup;
+  }, [channelType, channelId, subscribeChat]);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -78,10 +93,13 @@ export default function ChatPanel({ channelType, channelId }) {
 
     try {
       setSending(true);
-      await sendChatMessage(channelType, channelId, trimmed);
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({ channel_type: channelType, channel_id: channelId, content: trimmed, user_id: user.id });
+      if (error) throw error;
       setInput('');
     } catch (err) {
-      console.error('Failed to send message:', err);
+      console.error('Erro ao enviar mensagem:', err);
     } finally {
       setSending(false);
     }
@@ -105,7 +123,7 @@ export default function ChatPanel({ channelType, channelId }) {
           </div>
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-gray-500">
-            No messages yet. Start the conversation!
+            Nenhuma mensagem ainda. Comece a conversa!
           </div>
         ) : (
           messages.map((msg, idx) => {
@@ -118,7 +136,7 @@ export default function ChatPanel({ channelType, channelId }) {
                       isOwn ? 'text-primary-light' : 'text-accent'
                     }`}
                   >
-                    {msg.username || 'Anonymous'}
+                    {msg.username || 'Anônimo'}
                   </span>
                   <span className="text-[10px] text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">
                     {msg.created_at ? formatTimestamp(msg.created_at) : ''}
@@ -142,7 +160,7 @@ export default function ChatPanel({ channelType, channelId }) {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message..."
+            placeholder="Digite uma mensagem..."
             maxLength={1000}
             className="flex-1 bg-surface-light text-sm text-gray-200 placeholder-gray-500 px-3 py-2 rounded-lg border border-surface-lighter focus:outline-none focus:border-primary-light transition-colors"
             disabled={sending}
@@ -157,7 +175,7 @@ export default function ChatPanel({ channelType, channelId }) {
         </form>
       ) : (
         <div className="px-4 py-3 border-t border-surface-light text-center text-sm text-gray-500">
-          Log in to send messages
+          Faça login para enviar mensagens
         </div>
       )}
     </div>

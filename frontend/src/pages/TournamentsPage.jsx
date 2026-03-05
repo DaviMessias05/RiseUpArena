@@ -137,12 +137,10 @@ function TournamentCard({ tournament }) {
 
 export default function TournamentsPage() {
   const { isAdmin } = useAuth();
-  const { data: tournaments, loading: tLoading, refetch: refetchTournaments } = useCachedData('tournaments', fetchTournaments);
-  const { data: games, loading: gLoading } = useCachedData('games', fetchGames);
+  const { data: tournaments, loading: tLoading, refetch: refetchTournaments } = useCachedData('tournaments_v2', fetchTournaments);
+  const { data: games } = useCachedData('games', fetchGames);
   const [filterGame, setFilterGame] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-
-  const loading = tLoading || gLoading;
 
   const filteredTournaments = (tournaments || []).filter((t) => {
     if (filterGame && t.game_slug !== filterGame && t.game_id !== filterGame) return false;
@@ -160,11 +158,11 @@ export default function TournamentsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={refetchTournaments}
-            disabled={loading}
+            disabled={tLoading}
             className="p-2.5 bg-surface-light hover:bg-surface-lighter text-gray-400 hover:text-white rounded-xl border border-surface-lighter transition-colors disabled:opacity-50"
             title="Atualizar"
           >
-            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={18} className={tLoading ? 'animate-spin' : ''} />
           </button>
           {isAdmin && (
             <Link
@@ -208,7 +206,7 @@ export default function TournamentsPage() {
         </select>
       </div>
 
-      {loading ? (
+      {tLoading ? (
         <div className="flex justify-center py-20">
           <Loader2 size={40} className="text-primary-light animate-spin" />
         </div>

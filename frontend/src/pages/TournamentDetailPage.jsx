@@ -52,8 +52,8 @@ const TABS = [
   { id: 'rules', label: 'Regras' },
   { id: 'bracket', label: 'Chaves' },
   { id: 'teams', label: 'Equipes' },
-  { id: 'results', label: 'Resultados' },
   { id: 'chat', label: 'Chat' },
+  { id: 'results', label: 'Resultados' },
 ];
 
 export default function TournamentDetailPage() {
@@ -78,57 +78,49 @@ export default function TournamentDetailPage() {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('tournaments')
-        .select('*, games(name, slug, max_team_size)')
-        .eq('id', id)
-        .single();
-
-      if (!error && data) {
-        setTournament({
-          ...data,
-          game_name: data.games?.name || 'Jogo',
-          game_slug: data.games?.slug,
-          team_size: data.team_size || data.games?.max_team_size || 5,
-          prize_pool: data.prize_description || data.prize_pool,
-          max_players: data.max_participants || data.max_players,
-        });
-      }
-
-      const { data: parts } = await supabase
-        .from('tournament_participants')
-        .select('id, registered_at, status, profiles(username, display_name, avatar_url)')
-        .eq('tournament_id', id)
-        .order('registered_at', { ascending: true });
-      const partsData = parts || [];
-      setParticipants(partsData);
-      setParticipantCount(partsData.length);
-      setReadyCount(partsData.filter(p => p.status === 'checked_in').length);
-
-      if (user) {
-        const { data: reg } = await supabase
-          .from('tournament_participants')
-          .select('id, status')
-          .eq('tournament_id', id)
-          .eq('user_id', user.id)
-          .single();
-        if (reg) {
-          setRegistered(true);
-          setParticipantId(reg.id);
-          setIsReady(reg.status === 'checked_in');
+      try {
+        // Run all independent queries in parallel
+        const queries = [
+          supabase.from('tournaments').select('*, games(name, slug, max_team_size)').eq('id', id).single(),
+          supabase.from('tournament_participants').select('id, registered_at, status, profiles(username, display_name, avatar_url)').eq('tournament_id', id).order('registered_at', { ascending: true }),
+          supabase.from('chat_messages').select('id, content, created_at, user_id, profiles!user_id(username, display_name, avatar_url)').eq('channel_type', 'tournament').eq('channel_id', id).order('created_at', { ascending: true }).limit(100),
+        ];
+        if (user) {
+          queries.push(
+            supabase.from('tournament_participants').select('id, status').eq('tournament_id', id).eq('user_id', user.id).maybeSingle()
+          );
         }
+
+        const results = await Promise.all(queries);
+        const [tournamentRes, partsRes, msgsRes, regRes] = results;
+
+        if (!tournamentRes.error && tournamentRes.data) {
+          const data = tournamentRes.data;
+          setTournament({
+            ...data,
+            game_name: data.games?.name || 'Jogo',
+            game_slug: data.games?.slug,
+            team_size: data.team_size || data.games?.max_team_size || 5,
+            prize_pool: data.prize_description || data.prize_pool,
+            max_players: data.max_participants || data.max_players,
+          });
+        }
+
+        const partsData = partsRes.data || [];
+        setParticipants(partsData);
+        setParticipantCount(partsData.length);
+        setReadyCount(partsData.filter(p => p.status === 'checked_in').length);
+
+        setMessages(msgsRes.data || []);
+
+        if (regRes?.data) {
+          setRegistered(true);
+          setParticipantId(regRes.data.id);
+          setIsReady(regRes.data.status === 'checked_in');
+        }
+      } finally {
+        setLoading(false);
       }
-
-      const { data: msgs } = await supabase
-        .from('chat_messages')
-        .select('id, content, created_at, user_id, profiles!user_id(username, display_name, avatar_url)')
-        .eq('channel_type', 'tournament')
-        .eq('channel_id', id)
-        .order('created_at', { ascending: true })
-        .limit(100);
-      setMessages(msgs || []);
-
-      setLoading(false);
     }
 
     load();

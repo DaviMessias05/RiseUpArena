@@ -80,7 +80,7 @@ const VIP_PLANS = [
     popular: false,
     benefits: [
       'Emblema VIP Bronze no perfil',
-      'Bonus de 10% em RC ganhos',
+      'Bônus de 10% em RC ganhos',
       'Acesso antecipado a lobbies',
       'Cor exclusiva no chat',
     ],
@@ -96,9 +96,9 @@ const VIP_PLANS = [
     borderColor: 'border-gray-400',
     popular: true,
     benefits: [
-      'Todos os beneficios do Bronze',
+      'Todos os benefícios do Bronze',
       'Emblema VIP Prata no perfil',
-      'Bonus de 25% em RC ganhos',
+      'Bônus de 25% em RC ganhos',
       'Prioridade na fila de matchmaking',
       'Acesso a torneios exclusivos',
       'Banner personalizado no perfil',
@@ -115,11 +115,11 @@ const VIP_PLANS = [
     borderColor: 'border-yellow-500',
     popular: false,
     benefits: [
-      'Todos os beneficios do Prata',
+      'Todos os benefícios do Prata',
       'Emblema VIP Ouro no perfil',
-      'Bonus de 50% em RC ganhos',
+      'Bônus de 50% em RC ganhos',
       'Acesso VIP ao suporte',
-      'Convites ilimitados para lobbies privadas',
+      'Convites ilimitados para lobbies privados',
       'Destaque no ranking',
       'Efeitos exclusivos no perfil',
     ],
@@ -336,7 +336,7 @@ export default function VipsPage() {
           </div>
 
           <p className="text-xs text-gray-500 mt-6 text-center">
-            Os planos VIP sao renovados manualmente. Beneficios ativados imediatamente apos a compra.
+            Os planos VIP são renovados manualmente. Benefícios ativados imediatamente após a compra.
           </p>
         </div>
       )}
@@ -366,7 +366,7 @@ export default function VipsPage() {
                 <div>
                   <h3 className="font-semibold text-white text-sm">Arena Coins (AC)</h3>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    Moeda ganha jogando. Receba por vitorias, participacao em eventos, desafios e conquistas.
+                    Moeda ganha jogando. Receba por vitórias, participação em eventos, desafios e conquistas.
                   </p>
                 </div>
               </div>
@@ -382,7 +382,7 @@ export default function VipsPage() {
           </div>
 
           <p className="text-xs text-gray-500 mt-6 text-center">
-            Apos a compra, o saldo de Rise Coins e atualizado automaticamente na sua conta.
+            Após a compra, o saldo de Rise Coins é atualizado automaticamente na sua conta.
           </p>
         </div>
       )}

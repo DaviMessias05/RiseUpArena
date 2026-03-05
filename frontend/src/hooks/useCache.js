@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { getCache, setCache } from '../lib/cache'
+import { getCache, setCache, getCacheAge } from '../lib/cache'
 
-export function useCachedData(key, fetcher, ttlMs = 60 * 1000) {
+// Data younger than this won't trigger a background refetch
+const FRESH_WINDOW_MS = 30 * 1000
+
+export function useCachedData(key, fetcher, ttlMs = 5 * 60 * 1000) {
   const cached = getCache(key)
   const [data, setData] = useState(cached)
   const [loading, setLoading] = useState(!cached)
@@ -9,12 +12,15 @@ export function useCachedData(key, fetcher, ttlMs = 60 * 1000) {
   const fetcherRef = useRef(fetcher)
   fetcherRef.current = fetcher
 
-  const fetchData = useCallback(async (ignoreCache = false) => {
-    if (!ignoreCache) {
+  const fetchData = useCallback(async (force = false) => {
+    if (!force) {
       const c = getCache(key)
       if (c) {
         setData(c)
         setLoading(false)
+        // Skip network request if cache is still fresh
+        const age = getCacheAge(key)
+        if (age !== null && age < FRESH_WINDOW_MS) return
       }
     }
 
@@ -24,7 +30,6 @@ export function useCachedData(key, fetcher, ttlMs = 60 * 1000) {
       setCache(key, fresh, ttlMs)
       setError(null)
     } catch (err) {
-      // Only set error if we have no cached data
       if (!getCache(key)) {
         setError(err)
       }

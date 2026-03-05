@@ -58,7 +58,7 @@ export default function RankingsPage() {
     }
   }, [games, selectedGame]);
 
-  async function loadRankings() {
+  const loadRankings = useCallback(async () => {
     if (!selectedGame) return;
     setRankingsLoading(true);
     try {
@@ -69,12 +69,12 @@ export default function RankingsPage() {
     } finally {
       setRankingsLoading(false);
     }
-  }
+  }, [selectedGame]);
 
   // Fetch rankings when game changes
   useEffect(() => {
     loadRankings();
-  }, [selectedGame]);
+  }, [loadRankings]);
 
   if (gamesLoading) {
     return (

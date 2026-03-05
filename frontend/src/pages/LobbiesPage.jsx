@@ -95,7 +95,7 @@ export default function LobbiesPage() {
   const { executeRecaptcha } = useCaptcha();
 
   const { data: lobbies, loading: lLoading, refetch: refetchLobbies } = useCachedData('lobbies', fetchLobbies);
-  const { data: games, loading: gLoading } = useCachedData('games', fetchGames);
+  const { data: games } = useCachedData('games', fetchGames);
   const [filterGame, setFilterGame] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
@@ -107,8 +107,6 @@ export default function LobbiesPage() {
     game_id: '',
     max_players: 10,
   });
-
-  const loading = lLoading || gLoading;
 
   async function handleCreateLobby(e) {
     e.preventDefault();
@@ -155,11 +153,11 @@ export default function LobbiesPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={refetchLobbies}
-            disabled={loading}
+            disabled={lLoading}
             className="p-2.5 bg-surface-light hover:bg-surface-lighter text-gray-400 hover:text-white rounded-xl border border-surface-lighter transition-colors disabled:opacity-50"
             title="Atualizar"
           >
-            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={18} className={lLoading ? 'animate-spin' : ''} />
           </button>
           {user && (
             <button
@@ -294,7 +292,7 @@ export default function LobbiesPage() {
         </select>
       </div>
 
-      {loading ? (
+      {lLoading ? (
         <div className="flex justify-center py-20">
           <Loader2 size={40} className="text-primary-light animate-spin" />
         </div>

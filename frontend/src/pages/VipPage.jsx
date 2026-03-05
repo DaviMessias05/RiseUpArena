@@ -20,9 +20,9 @@ const PLANS = [
     benefits: [
       'Badge VIP Bronze no perfil',
       'Avatar exclusivo VIP',
+      'Borda de perfil exclusiva',
       'Acesso a torneios VIP',
       'Prioridade no matchmaking',
-      'Destaque no ranking',
     ],
   },
   {
@@ -37,6 +37,7 @@ const PLANS = [
     benefits: [
       'Todos benefícios do Bronze',
       'Badge VIP Silver no perfil',
+      'Acesso a campeonatos exclusivos',
       '2,5% de desconto em partidas',
     ],
   },
@@ -51,8 +52,6 @@ const PLANS = [
     benefits: [
       'Todos benefícios do Silver',
       'Badge VIP Premium dourado',
-      'Borda de perfil exclusiva',
-      'Acesso a campeonatos exclusivos',
       'Prioridade máxima no matchmaking',
       '5% de desconto em partidas',
       '5% de desconto em campeonatos',
@@ -224,11 +223,11 @@ export default function VipPage() {
               {[
                 ['Badge VIP no perfil', true, true, true],
                 ['Avatar exclusivo', true, true, true],
+                ['Borda de perfil exclusiva', true, true, true],
                 ['Torneios VIP', true, true, true],
                 ['Prioridade matchmaking', true, true, true],
-                ['Destaque no ranking', true, true, true],
-                ['Borda de perfil exclusiva', false, false, true],
-                ['Campeonatos exclusivos', false, false, true],
+                ['Campeonatos exclusivos', false, true, true],
+                ['Prioridade máxima matchmaking', false, false, true],
                 ['Desconto em partidas', '—', '2,5%', '5%'],
                 ['Desconto em campeonatos', '—', '—', '5%'],
               ].map(([label, bronze, silver, premium], idx) => (

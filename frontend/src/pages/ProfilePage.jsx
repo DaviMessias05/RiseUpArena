@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { VipBadge } from './VipPage';
-import * as api from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 function getLevelInfo(rp) {
   if (rp >= 3000) return { level: 10, label: 'Nível 10', color: 'text-red-400' };
@@ -138,31 +138,62 @@ export default function ProfilePage() {
       setError(null);
 
       try {
+        // Fetch profile, rankings (stats) and match history in parallel via Supabase directly
+        const profilePromise = isOwnProfile && authProfile
+          ? Promise.resolve({ data: authProfile, error: null })
+          : supabase.from('profiles').select('*').eq('id', targetUserId).single();
+
+        const statsPromise = supabase
+          .from('rankings')
+          .select('rating, wins, losses, games(id, name, slug)')
+          .eq('user_id', targetUserId);
+
+        const matchesPromise = supabase
+          .from('match_players')
+          .select('result, rating_change, matches(id, created_at, games(name))')
+          .eq('user_id', targetUserId)
+          .order('created_at', { ascending: false, referencedTable: 'matches' })
+          .limit(20);
+
         const [profileResult, statsResult, matchesResult] = await Promise.allSettled([
-          isOwnProfile && authProfile ? Promise.resolve(authProfile) : api.getProfile(targetUserId),
-          api.getProfileStats(targetUserId),
-          api.getProfileMatches(targetUserId),
+          profilePromise,
+          statsPromise,
+          matchesPromise,
         ]);
 
         if (cancelled) return;
 
-        if (profileResult.status === 'fulfilled') {
-          setProfileData(profileResult.value);
+        if (profileResult.status === 'fulfilled' && !profileResult.value.error) {
+          const p = profileResult.value.data;
+          setProfileData(p);
           setEditForm({
-            display_name: profileResult.value?.display_name || '',
-            bio: profileResult.value?.bio || '',
-            avatar_url: profileResult.value?.avatar_url || '',
+            display_name: p?.display_name || '',
+            bio: p?.bio || '',
+            avatar_url: p?.avatar_url || '',
           });
         } else {
           throw new Error('Perfil não encontrado.');
         }
 
-        if (statsResult.status === 'fulfilled') {
-          setGameStats(Array.isArray(statsResult.value) ? statsResult.value : []);
+        if (statsResult.status === 'fulfilled' && !statsResult.value.error) {
+          setGameStats((statsResult.value.data || []).map(s => ({
+            game_id: s.games?.id,
+            game_name: s.games?.name,
+            game_slug: s.games?.slug,
+            rating: s.rating,
+            wins: s.wins,
+            losses: s.losses,
+          })));
         }
 
-        if (matchesResult.status === 'fulfilled') {
-          setMatches(Array.isArray(matchesResult.value) ? matchesResult.value : []);
+        if (matchesResult.status === 'fulfilled' && !matchesResult.value.error) {
+          setMatches((matchesResult.value.data || []).map(mp => ({
+            id: mp.matches?.id,
+            result: mp.result,
+            rating_change: mp.rating_change,
+            created_at: mp.matches?.created_at,
+            game_name: mp.matches?.games?.name,
+          })));
         }
       } catch (err) {
         if (!cancelled) setError(err.message);
@@ -296,7 +327,7 @@ export default function ProfilePage() {
                 value={editForm.display_name}
                 onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
                 className="w-full px-4 py-3 bg-surface-light border border-surface-lighter rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Seu nome de exibicao"
+                placeholder="Seu nome de exibição"
                 maxLength={30}
               />
             </div>

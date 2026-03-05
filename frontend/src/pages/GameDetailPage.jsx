@@ -50,12 +50,16 @@ function RankBadge({ position }) {
 }
 
 function getTierLabel(rating) {
-  if (rating >= 2000) return { label: 'Challenger', color: 'text-yellow-400' };
-  if (rating >= 1700) return { label: 'Diamond', color: 'text-cyan-400' };
-  if (rating >= 1400) return { label: 'Platinum', color: 'text-teal-400' };
-  if (rating >= 1100) return { label: 'Gold', color: 'text-yellow-500' };
-  if (rating >= 800) return { label: 'Silver', color: 'text-gray-300' };
-  return { label: 'Bronze', color: 'text-orange-400' };
+  if (rating >= 3000) return { label: 'Nível 10', color: 'text-red-500' };
+  if (rating >= 2501) return { label: 'Nível 9', color: 'text-orange-400' };
+  if (rating >= 2101) return { label: 'Nível 8', color: 'text-amber-400' };
+  if (rating >= 1701) return { label: 'Nível 7', color: 'text-yellow-400' };
+  if (rating >= 1301) return { label: 'Nível 6', color: 'text-lime-400' };
+  if (rating >= 901)  return { label: 'Nível 5', color: 'text-emerald-400' };
+  if (rating >= 601)  return { label: 'Nível 4', color: 'text-teal-400' };
+  if (rating >= 301)  return { label: 'Nível 3', color: 'text-cyan-400' };
+  if (rating >= 101)  return { label: 'Nível 2', color: 'text-blue-400' };
+  return { label: 'Nível 1', color: 'text-slate-400' };
 }
 
 export default function GameDetailPage() {
@@ -64,7 +68,7 @@ export default function GameDetailPage() {
 
   const gameFetcher = useCallback(() => fetchGame(slug), [slug]);
   const rankingsFetcher = useCallback(() => fetchRankings(slug), [slug]);
-  const { data: allTournaments } = useCachedData('tournaments', fetchTournaments);
+  const { data: allTournaments } = useCachedData('tournaments_v2', fetchTournaments);
   const { data: game, loading: gameLoading, error: gameError } = useCachedData(`game_${slug}`, gameFetcher);
   const { data: rankings } = useCachedData(`rankings_${slug}`, rankingsFetcher);
 
@@ -406,50 +410,29 @@ export default function GameDetailPage() {
 
             {displayRankings.length > 0 && (
               <div className="bg-surface rounded-xl border border-surface-light/50 p-6">
-                <h3 className="text-lg font-bold text-white mb-4">Distribuição de Tiers</h3>
+                <h3 className="text-lg font-bold text-white mb-4">Distribuição de Níveis</h3>
                 <div className="space-y-3">
-                  {['Challenger', 'Diamond', 'Platinum', 'Gold', 'Silver', 'Bronze'].map(
-                    (tierName) => {
-                      const count = displayRankings.filter((p) => {
-                        const tier = getTierLabel(p.rating || 0);
-                        return tier.label === tierName;
-                      }).length;
-                      const percentage =
-                        displayRankings.length > 0
-                          ? Math.round((count / displayRankings.length) * 100)
-                          : 0;
-                      const tierInfo = getTierLabel(
-                        tierName === 'Challenger'
-                          ? 2000
-                          : tierName === 'Diamond'
-                          ? 1700
-                          : tierName === 'Platinum'
-                          ? 1400
-                          : tierName === 'Gold'
-                          ? 1100
-                          : tierName === 'Silver'
-                          ? 800
-                          : 0
-                      );
-
-                      return (
-                        <div key={tierName} className="flex items-center gap-3">
-                          <span className={`w-24 text-sm font-medium ${tierInfo.color}`}>
-                            {tierName}
-                          </span>
-                          <div className="flex-1 h-4 bg-surface-light rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary rounded-full transition-all duration-500"
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                          <span className="text-sm text-gray-400 w-16 text-right">
-                            {count} ({percentage}%)
-                          </span>
+                  {[3000, 2501, 2101, 1701, 1301, 901, 601, 301, 101, 0].map((threshold) => {
+                    const tierInfo = getTierLabel(threshold);
+                    const count = displayRankings.filter((p) => getTierLabel(p.rating || 0).label === tierInfo.label).length;
+                    const percentage = displayRankings.length > 0 ? Math.round((count / displayRankings.length) * 100) : 0;
+                    return (
+                      <div key={tierInfo.label} className="flex items-center gap-3">
+                        <span className={`w-20 text-sm font-medium ${tierInfo.color}`}>
+                          {tierInfo.label}
+                        </span>
+                        <div className="flex-1 h-3 bg-surface-light rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary rounded-full transition-all duration-500"
+                            style={{ width: `${percentage}%` }}
+                          />
                         </div>
-                      );
-                    }
-                  )}
+                        <span className="text-sm text-gray-400 w-16 text-right">
+                          {count} ({percentage}%)
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

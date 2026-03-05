@@ -101,6 +101,8 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!mounted) return
+        // INITIAL_SESSION is handled by initializeAuth() above — skip to avoid double fetchProfile
+        if (event === 'INITIAL_SESSION') return
 
         setSession(newSession)
         const newUser = newSession?.user ?? null
@@ -108,14 +110,10 @@ export function AuthProvider({ children }) {
 
         if (newUser) {
           const profileData = await fetchProfile(newUser.id)
-          setCachedAuth(newUser, profileData)
+          if (mounted) setCachedAuth(newUser, profileData)
         } else {
           setProfile(null)
           setCachedAuth(null, null)
-        }
-
-        if (event === 'INITIAL_SESSION') {
-          setLoading(false)
         }
       }
     )

@@ -26,7 +26,8 @@ export async function fetchTournaments() {
   const { data, error } = await supabase
     .from('tournaments')
     .select('*, games(name, slug, max_team_size)')
-    .order('created_at', { ascending: false })
+    .neq('status', 'draft')
+    .order('start_date', { ascending: true })
 
   if (error) throw error
   return (data || []).map(t => ({

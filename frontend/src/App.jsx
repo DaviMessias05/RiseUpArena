@@ -14,8 +14,8 @@ const GamesPage = lazy(() => import('./pages/GamesPage'))
 const GameDetailPage = lazy(() => import('./pages/GameDetailPage'))
 const TournamentsPage = lazy(() => import('./pages/TournamentsPage'))
 const TournamentDetailPage = lazy(() => import('./pages/TournamentDetailPage'))
-// const LobbiesPage = lazy(() => import('./pages/LobbiesPage'))
-// const LobbyDetailPage = lazy(() => import('./pages/LobbyDetailPage'))
+const LobbiesPage = lazy(() => import('./pages/LobbiesPage'))
+const LobbyDetailPage = lazy(() => import('./pages/LobbyDetailPage'))
 const RankingsPage = lazy(() => import('./pages/RankingsPage'))
 const StorePage = lazy(() => import('./pages/StorePage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
@@ -36,7 +36,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-bg">
       <Navbar />
-      <main className="pt-20">
+      <main className="pt-14">
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -48,8 +48,7 @@ export default function App() {
             <Route path="/games/:slug" element={<GameDetailPage />} />
             <Route path="/tournaments" element={<TournamentsPage />} />
             <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
-            {/* Lobbies desativado temporariamente */}
-            {/* <Route path="/lobbies" element={<LobbiesPage />} />
+            <Route path="/lobbies" element={<LobbiesPage />} />
             <Route
               path="/lobbies/:id"
               element={
@@ -57,7 +56,7 @@ export default function App() {
                   <LobbyDetailPage />
                 </ProtectedRoute>
               }
-            /> */}
+            />
             <Route path="/rankings" element={<RankingsPage />} />
             <Route path="/vip" element={<VipPage />} />
             <Route path="/terms" element={<TermsPage />} />

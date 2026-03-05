@@ -215,13 +215,14 @@ function GameLevelCard({ ranking }) {
   const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
 
   return (
-    <div className="p-6 flex flex-col gap-3">
+    <div className={`bg-surface rounded-xl border p-6 flex flex-col gap-3 ${tier.border}`}>
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-400">{ranking.game_name}</span>
+        <span className="text-sm font-semibold text-white">{ranking.game_name}</span>
         <span className="text-xs text-gray-500">{winRate}% WR</span>
       </div>
-      <div className="text-center">
+      <div className={`text-center py-2 rounded-lg ${tier.bg}`}>
         <div className={`text-6xl font-black ${tier.color}`}>{tier.level}</div>
+        <div className={`text-xs font-semibold mt-1 ${tier.color}`}>{tier.label}</div>
       </div>
       <LevelProgressBar level={tier.level} rp={rp} color={tier.color} />
     </div>
@@ -231,13 +232,14 @@ function GameLevelCard({ ranking }) {
 function UnrankedGameCard({ game }) {
   const tier = getLevelInfo(0);
   return (
-    <div className="p-6 flex flex-col gap-3">
+    <div className="bg-surface rounded-xl border border-surface-light/50 p-6 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-400">{game.name}</span>
-        <span className="text-xs text-gray-500">0% WR</span>
+        <span className="text-sm font-semibold text-white">{game.name}</span>
+        <span className="text-xs text-gray-500">Sem partidas</span>
       </div>
-      <div className="text-center">
+      <div className={`text-center py-2 rounded-lg ${tier.bg}`}>
         <div className={`text-6xl font-black ${tier.color}`}>1</div>
+        <div className={`text-xs font-semibold mt-1 ${tier.color}`}>Nível 1</div>
       </div>
       <LevelProgressBar level={1} rp={0} color={tier.color} />
     </div>
@@ -246,8 +248,8 @@ function UnrankedGameCard({ game }) {
 
 export default function HomePage() {
   const { user } = useAuth();
-  const { data: tournaments, loading: tournamentsLoading } = useCachedData('tournaments', fetchTournaments);
-  const { data: games } = useCachedData('games', fetchGames);
+  const { data: tournaments, loading: tournamentsLoading } = useCachedData('tournaments_v2', fetchTournaments);
+  const { data: games, loading: gamesLoading } = useCachedData('games', fetchGames);
   const [userRankings, setUserRankings] = useState([]);
 
   const fetchRankings = useCallback(async () => {
@@ -331,14 +333,22 @@ export default function HomePage() {
         <section className="py-16 border-y border-surface-light/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-white mb-8">Seus Níveis</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
-              {(games || []).map((game) => {
-                const ranking = userRankings.find(r => r.game_id === game.id);
-                return ranking
-                  ? <GameLevelCard key={game.id} ranking={{ ...ranking, game_name: game.name }} />
-                  : <UnrankedGameCard key={game.id} game={game} />;
-              })}
-            </div>
+            {gamesLoading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 size={28} className="text-primary-light animate-spin" />
+              </div>
+            ) : (games || []).length === 0 ? (
+              <p className="text-gray-500 text-sm">Nenhum jogo disponível.</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {(games || []).map((game) => {
+                  const ranking = userRankings.find(r => r.game_id === game.id);
+                  return ranking
+                    ? <GameLevelCard key={game.id} ranking={{ ...ranking, game_name: game.name }} />
+                    : <UnrankedGameCard key={game.id} game={game} />;
+                })}
+              </div>
+            )}
           </div>
         </section>
       )}

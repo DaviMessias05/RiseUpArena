@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useRealtime } from '../contexts/RealtimeContext';
 import * as api from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 const STATUS_LABELS = {
   waiting: 'Aguardando jogadores',
@@ -43,12 +44,24 @@ function ChatPanel({ lobbyId }) {
 
     async function fetchMessages() {
       try {
-        const data = await api.getChatMessages('lobby', lobbyId);
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('id, content, created_at, user_id, profiles(username, display_name)')
+          .eq('channel_type', 'lobby')
+          .eq('channel_id', lobbyId)
+          .order('created_at', { ascending: true })
+          .limit(100);
+        if (error) throw error;
         if (!cancelled) {
-          setMessages(Array.isArray(data) ? data : []);
+          setMessages(
+            (data || []).map((msg) => ({
+              ...msg,
+              username: msg.profiles?.username || msg.profiles?.display_name,
+            }))
+          );
         }
       } catch (err) {
-        console.error('Error fetching chat messages:', err);
+        console.error('Erro ao carregar mensagens:', err);
       }
     }
 
@@ -76,10 +89,13 @@ function ChatPanel({ lobbyId }) {
 
     setSendingMessage(true);
     try {
-      await api.sendChatMessage('lobby', lobbyId, newMessage.trim());
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({ channel_type: 'lobby', channel_id: lobbyId, content: newMessage.trim(), user_id: user.id });
+      if (error) throw error;
       setNewMessage('');
     } catch (err) {
-      console.error('Error sending message:', err);
+      console.error('Erro ao enviar mensagem:', err);
     } finally {
       setSendingMessage(false);
     }
@@ -133,7 +149,7 @@ function ChatPanel({ lobbyId }) {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Digite uma mensagem..."
-            maxLength={500}
+            maxLength={1000}
             className="flex-1 px-3 py-2 bg-surface-light border border-surface-lighter rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
           <button
