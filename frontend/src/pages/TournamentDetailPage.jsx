@@ -97,9 +97,9 @@ export default function TournamentDetailPage() {
 
       const { data: parts } = await supabase
         .from('tournament_participants')
-        .select('id, created_at, status, profiles(username, display_name, avatar_url)')
+        .select('id, registered_at, status, profiles(username, display_name, avatar_url)')
         .eq('tournament_id', id)
-        .order('created_at', { ascending: true });
+        .order('registered_at', { ascending: true });
       const partsData = parts || [];
       setParticipants(partsData);
       setParticipantCount(partsData.length);
@@ -171,14 +171,17 @@ export default function TournamentDetailPage() {
   async function handleRegister() {
     if (!user || registered || registering) return;
     setRegistering(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('tournament_participants')
       .insert({ tournament_id: id, user_id: user.id })
-      .select('id')
+      .select('id, registered_at, status, profiles!user_id(username, display_name, avatar_url)')
       .single();
-    setRegistered(true);
-    setParticipantId(data?.id || null);
-    setParticipantCount(c => c + 1);
+    if (!error && data) {
+      setRegistered(true);
+      setParticipantId(data.id);
+      setParticipants(prev => [...prev, data]);
+      setParticipantCount(c => c + 1);
+    }
     setRegistering(false);
   }
 
