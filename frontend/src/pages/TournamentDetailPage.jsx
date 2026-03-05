@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
-import { Trophy, Clock, Users, Gamepad2, ArrowLeft, Loader2, Calendar, Award, ChevronRight } from 'lucide-react';
+import { Trophy, Clock, Users, Gamepad2, ArrowLeft, Loader2, Calendar, Award, ChevronRight, ScrollText, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -40,6 +40,7 @@ export default function TournamentDetailPage() {
   const [registered, setRegistered] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
+  const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -152,76 +153,109 @@ export default function TournamentDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main info */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Details card */}
-          <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
-            <h2 className="text-lg font-bold text-white mb-4">Detalhes</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-start gap-3">
-                <Gamepad2 size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-[11px] text-gray-500 uppercase font-semibold">Jogo</p>
-                  <p className="text-sm text-white font-medium">{tournament.game_name}</p>
+          {showRules ? (
+            /* Rules panel */
+            <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <ScrollText size={20} className="text-primary-light" />
+                  <h2 className="text-lg font-bold text-white">Regras do Campeonato</h2>
                 </div>
+                <button
+                  onClick={() => setShowRules(false)}
+                  className="p-1.5 rounded-lg hover:bg-surface-light text-gray-400 hover:text-white transition-colors"
+                >
+                  <X size={18} />
+                </button>
               </div>
-              <div className="flex items-start gap-3">
-                <Users size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-[11px] text-gray-500 uppercase font-semibold">Formato</p>
-                  <p className="text-sm text-white font-medium">{tournament.team_size}vs{tournament.team_size}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Trophy size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-[11px] text-gray-500 uppercase font-semibold">Chaveamento</p>
-                  <p className="text-sm text-white font-medium">{FORMAT_LABELS[tournament.format] || tournament.format}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Users size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-[11px] text-gray-500 uppercase font-semibold">Vagas</p>
-                  <p className="text-sm text-white font-medium">{participantCount} / {tournament.max_players || '?'}</p>
-                </div>
-              </div>
-              {tournament.start_date && (
-                <div className="flex items-start gap-3 col-span-2">
-                  <Calendar size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-[11px] text-gray-500 uppercase font-semibold">Data de início</p>
-                    <p className="text-sm text-white font-medium">{formatDate(tournament.start_date)}</p>
+              {tournament.rules ? (
+                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-line">{tournament.rules}</p>
+              ) : (
+                <p className="text-gray-500 text-sm italic">Nenhuma regra definida para este campeonato.</p>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Prize */}
+              {tournament.prize_pool && (
+                <div id="prize-section" className="bg-surface rounded-2xl border border-yellow-500/30 p-6 scroll-mt-24">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Award size={20} className="text-yellow-400" />
+                    <h2 className="text-lg font-bold text-white">Premiação</h2>
                   </div>
+                  <p className="text-yellow-400 font-semibold text-sm">
+                    1º lugar: {(() => {
+                      const matches = tournament.prize_pool.match(/[\d.,]+\s*RC/gi) || [];
+                      if (matches.length === 0) return tournament.prize_pool;
+                      const total = matches.reduce((acc, m) => {
+                        const n = parseInt(m.replace(/[.,\s]/g, '').replace(/RC/i, ''));
+                        return acc + (isNaN(n) ? 0 : n);
+                      }, 0);
+                      return total.toLocaleString('pt-BR') + ' RC';
+                    })()}
+                  </p>
                 </div>
               )}
-              <div className="flex items-start gap-3 col-span-2">
-                <ChevronRight size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-[11px] text-gray-500 uppercase font-semibold">Nível requerido</p>
-                  <p className="text-sm text-white font-medium">{tournament.min_level ?? 1} → {tournament.max_level ?? 10}</p>
+
+              {/* Details card */}
+              <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
+                <h2 className="text-lg font-bold text-white mb-4">Detalhes</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3">
+                    <Gamepad2 size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[11px] text-gray-500 uppercase font-semibold">Jogo</p>
+                      <p className="text-sm text-white font-medium">{tournament.game_name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Users size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[11px] text-gray-500 uppercase font-semibold">Formato</p>
+                      <p className="text-sm text-white font-medium">{tournament.team_size}vs{tournament.team_size}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Trophy size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[11px] text-gray-500 uppercase font-semibold">Chaveamento</p>
+                      <p className="text-sm text-white font-medium">{FORMAT_LABELS[tournament.format] || tournament.format}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Users size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[11px] text-gray-500 uppercase font-semibold">Vagas</p>
+                      <p className="text-sm text-white font-medium">{participantCount} / {tournament.max_players || '?'}</p>
+                    </div>
+                  </div>
+                  {tournament.start_date && (
+                    <div className="flex items-start gap-3 col-span-2">
+                      <Calendar size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-[11px] text-gray-500 uppercase font-semibold">Data de início</p>
+                        <p className="text-sm text-white font-medium">{formatDate(tournament.start_date)}</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-start gap-3 col-span-2">
+                    <ChevronRight size={18} className="text-primary-light mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[11px] text-gray-500 uppercase font-semibold">Nível requerido</p>
+                      <p className="text-sm text-white font-medium">{tournament.min_level ?? 1} → {tournament.max_level ?? 10}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Description */}
-          {tournament.description && (
-            <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
-              <h2 className="text-lg font-bold text-white mb-3">Sobre o campeonato</h2>
-              <p className="text-gray-400 text-sm leading-relaxed">{tournament.description}</p>
-            </div>
-          )}
-
-          {/* Prize */}
-          {tournament.prize_pool && (
-            <div id="prize-section" className="bg-surface rounded-2xl border border-yellow-500/30 p-6 scroll-mt-24">
-              <div className="flex items-center gap-2 mb-4">
-                <Award size={20} className="text-yellow-400" />
-                <h2 className="text-lg font-bold text-white">Premiação</h2>
-              </div>
-              <p className="text-yellow-400 font-semibold text-sm leading-relaxed whitespace-pre-line">
-                {tournament.prize_pool}
-              </p>
-            </div>
+              {/* Description */}
+              {tournament.description && (
+                <div className="bg-surface rounded-2xl border border-surface-light/50 p-6">
+                  <h2 className="text-lg font-bold text-white mb-3">Sobre o campeonato</h2>
+                  <p className="text-gray-400 text-sm leading-relaxed">{tournament.description}</p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -269,6 +303,19 @@ export default function TournamentDetailPage() {
               />
             </div>
           </div>
+
+          {/* Rules button */}
+          <button
+            onClick={() => setShowRules(v => !v)}
+            className={`w-full flex items-center justify-center gap-2 py-3 border font-semibold rounded-2xl text-sm transition-all ${
+              showRules
+                ? 'bg-primary/10 border-primary/50 text-primary-light'
+                : 'bg-surface border-surface-light/50 hover:border-primary/50 text-gray-300 hover:text-white'
+            }`}
+          >
+            <ScrollText size={16} />
+            {showRules ? 'Fechar Regras' : 'Ver Regras'}
+          </button>
         </div>
       </div>
     </div>

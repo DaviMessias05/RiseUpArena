@@ -37,27 +37,24 @@ function formatTournamentDate(dateStr) {
   return `${day}, ${time}`;
 }
 
-const PRIZE_TRUNCATE = 15;
+function sumPrizeRC(prizeText) {
+  const matches = prizeText.match(/[\d.,]+\s*RC/gi) || [];
+  if (matches.length === 0) return null;
+  return matches.reduce((acc, m) => {
+    const num = parseInt(m.replace(/[.,\s]/g, '').replace(/RC/i, ''));
+    return acc + (isNaN(num) ? 0 : num);
+  }, 0);
+}
 
-function PrizeOverlay({ prize, tournamentId }) {
-  const isLong = prize.length > PRIZE_TRUNCATE;
+function PrizeOverlay({ prize }) {
+  const total = sumPrizeRC(prize);
+  const display = total != null ? total.toLocaleString('pt-BR') + ' RC' : prize.slice(0, 20);
 
   return (
-    <div className="absolute top-2 right-2 max-w-[45%]">
+    <div className="absolute top-2 right-2">
       <div className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
-        <span className="text-[10px] text-gray-400">Premiação: </span>
-        <span className="text-[10px] text-yellow-400 font-semibold">
-          {isLong ? prize.slice(0, PRIZE_TRUNCATE) + '…' : prize}
-        </span>
-        {isLong && (
-          <Link
-            to={`/tournaments/${tournamentId}#prize`}
-            onClick={e => e.stopPropagation()}
-            className="block text-[9px] text-blue-400 hover:text-blue-300 mt-0.5 underline"
-          >
-            ver detalhes
-          </Link>
-        )}
+        <span className="text-[10px] text-gray-400">1º lugar: </span>
+        <span className="text-[10px] text-yellow-400 font-semibold">{display}</span>
       </div>
     </div>
   );
@@ -95,7 +92,7 @@ function TournamentCard({ tournament }) {
           </div>
         )}
         {tournament.prize_pool && (
-          <PrizeOverlay prize={tournament.prize_pool} tournamentId={tournament.id} />
+          <PrizeOverlay prize={tournament.prize_pool} />
         )}
         {/* Game icon overlay */}
         <div className="absolute bottom-3 left-3 w-8 h-8 rounded-lg bg-surface/80 backdrop-blur-sm flex items-center justify-center border border-surface-light/50">

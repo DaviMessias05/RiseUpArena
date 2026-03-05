@@ -69,27 +69,24 @@ function formatTournamentDate(dateStr) {
   return `${day}, ${time}`;
 }
 
-const PRIZE_TRUNCATE = 15;
+function sumPrizeRC(prizeText) {
+  const matches = prizeText.match(/[\d.,]+\s*RC/gi) || [];
+  if (matches.length === 0) return null;
+  return matches.reduce((acc, m) => {
+    const num = parseInt(m.replace(/[.,\s]/g, '').replace(/RC/i, ''));
+    return acc + (isNaN(num) ? 0 : num);
+  }, 0);
+}
 
-function PrizeOverlay({ prize, tournamentId }) {
-  const isLong = prize.length > PRIZE_TRUNCATE;
+function PrizeOverlay({ prize }) {
+  const total = sumPrizeRC(prize);
+  const display = total != null ? total.toLocaleString('pt-BR') + ' RC' : prize.slice(0, 20);
 
   return (
-    <div className="absolute top-2 right-2 max-w-[45%]">
+    <div className="absolute top-2 right-2">
       <div className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
-        <span className="text-[10px] text-gray-400">Premiação: </span>
-        <span className="text-[10px] text-yellow-400 font-semibold">
-          {isLong ? prize.slice(0, PRIZE_TRUNCATE) + '…' : prize}
-        </span>
-        {isLong && (
-          <Link
-            to={`/tournaments/${tournamentId}#prize`}
-            onClick={e => e.stopPropagation()}
-            className="block text-[9px] text-blue-400 hover:text-blue-300 mt-0.5 underline"
-          >
-            ver detalhes
-          </Link>
-        )}
+        <span className="text-[10px] text-gray-400">1º lugar: </span>
+        <span className="text-[10px] text-yellow-400 font-semibold">{display}</span>
       </div>
     </div>
   );
@@ -127,7 +124,7 @@ function TournamentCard({ tournament }) {
           </div>
         )}
         {tournament.prize_pool && (
-          <PrizeOverlay prize={tournament.prize_pool} tournamentId={tournament.id} />
+          <PrizeOverlay prize={tournament.prize_pool} />
         )}
         <div className="absolute bottom-2 left-2 w-7 h-7 rounded-lg bg-surface/80 backdrop-blur-sm flex items-center justify-center border border-surface-light/50">
           <Gamepad2 size={14} className="text-gray-300" />
@@ -218,13 +215,13 @@ function GameLevelCard({ ranking }) {
   const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
 
   return (
-    <div className="p-4 flex flex-col gap-2">
+    <div className="p-6 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-400">{ranking.game_name}</span>
-        <span className="text-[11px] text-gray-500">{winRate}% WR</span>
+        <span className="text-sm font-semibold text-gray-400">{ranking.game_name}</span>
+        <span className="text-xs text-gray-500">{winRate}% WR</span>
       </div>
       <div className="text-center">
-        <div className={`text-4xl font-black ${tier.color}`}>{tier.level}</div>
+        <div className={`text-6xl font-black ${tier.color}`}>{tier.level}</div>
       </div>
       <LevelProgressBar level={tier.level} rp={rp} color={tier.color} />
     </div>
@@ -234,13 +231,13 @@ function GameLevelCard({ ranking }) {
 function UnrankedGameCard({ game }) {
   const tier = getLevelInfo(0);
   return (
-    <div className="p-4 flex flex-col gap-2">
+    <div className="p-6 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-400">{game.name}</span>
-        <span className="text-[11px] text-gray-500">0% WR</span>
+        <span className="text-sm font-semibold text-gray-400">{game.name}</span>
+        <span className="text-xs text-gray-500">0% WR</span>
       </div>
       <div className="text-center">
-        <div className={`text-4xl font-black ${tier.color}`}>1</div>
+        <div className={`text-6xl font-black ${tier.color}`}>1</div>
       </div>
       <LevelProgressBar level={1} rp={0} color={tier.color} />
     </div>
@@ -333,8 +330,8 @@ export default function HomePage() {
       {user && (
         <section className="py-16 border-y border-surface-light/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-xl font-bold text-white text-center mb-6">Seus Níveis</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold text-white mb-8">Seus Níveis</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
               {(games || []).map((game) => {
                 const ranking = userRankings.find(r => r.game_id === game.id);
                 return ranking
