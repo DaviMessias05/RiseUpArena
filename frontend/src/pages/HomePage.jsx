@@ -133,26 +133,63 @@ function getLevelInfo(rp) {
   return { level: 1, label: 'Nível 1', color: 'text-slate-400', bg: 'bg-slate-400/10', border: 'border-slate-400/30' };
 }
 
+const LEVEL_THRESHOLDS = [0, 101, 301, 601, 901, 1301, 1701, 2101, 2501, 3000];
+
+const RING_COLOR_MAP = {
+  'text-slate-400': '#94a3b8',
+  'text-blue-400': '#60a5fa',
+  'text-cyan-400': '#22d3ee',
+  'text-teal-400': '#2dd4bf',
+  'text-emerald-400': '#34d399',
+  'text-lime-400': '#a3e635',
+  'text-yellow-400': '#facc15',
+  'text-amber-400': '#fbbf24',
+  'text-orange-400': '#fb923c',
+  'text-red-500': '#ef4444',
+};
+
+function LevelRing({ level, rp, color }) {
+  const size = 96;
+  const strokeWidth = 7;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const currentMin = LEVEL_THRESHOLDS[level - 1] ?? 0;
+  const nextMin = LEVEL_THRESHOLDS[level] ?? 3000;
+  const progress = level >= 10 ? 1 : Math.min((rp - currentMin) / (nextMin - currentMin), 1);
+  const dashOffset = circumference * (1 - progress);
+  const stroke = RING_COLOR_MAP[color] || '#94a3b8';
+
+  return (
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="absolute -rotate-90">
+        <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="#1e293b" strokeWidth={strokeWidth} />
+        <circle
+          cx={size/2} cy={size/2} r={radius}
+          fill="none" stroke={stroke} strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          strokeLinecap="round"
+        />
+      </svg>
+      <span className={`text-3xl font-black ${color} z-10`}>{level}</span>
+    </div>
+  );
+}
+
 function GameLevelCard({ ranking }) {
-  const tier = getLevelInfo(ranking.rating || 0);
+  const rp = ranking.rating || 0;
+  const tier = getLevelInfo(rp);
   const wins = ranking.wins || 0;
   const losses = ranking.losses || 0;
   const total = wins + losses;
   const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
 
   return (
-    <div className={`bg-surface rounded-xl border ${tier.border} p-4 text-center`}>
-      <div className="flex items-center justify-center gap-2 mb-2">
-        <Gamepad2 size={14} className="text-gray-400" />
-        <span className="text-sm font-medium text-gray-300">{ranking.game_name}</span>
-      </div>
-      <div className={`text-3xl font-black ${tier.color}`}>{tier.level}</div>
-      <span className={`inline-block mt-1 px-2.5 py-0.5 rounded text-xs font-semibold ${tier.color} ${tier.bg}`}>
-        {tier.label}
-      </span>
-      <div className="mt-2 text-xs text-gray-500">
-        {ranking.rating || 0} RP • {winRate}% WR
-      </div>
+    <div className={`bg-surface rounded-xl border ${tier.border} p-4 flex flex-col items-center gap-2`}>
+      <span className="text-xs font-semibold text-gray-400">{ranking.game_name}</span>
+      <LevelRing level={tier.level} rp={rp} color={tier.color} />
+      <span className={`text-xs font-semibold ${tier.color}`}>{tier.label}</span>
+      <div className="text-[11px] text-gray-500">{rp} RP • {winRate}% WR</div>
     </div>
   );
 }
@@ -160,18 +197,11 @@ function GameLevelCard({ ranking }) {
 function UnrankedGameCard({ game }) {
   const tier = getLevelInfo(0);
   return (
-    <div className={`bg-surface rounded-xl border ${tier.border} p-4 text-center`}>
-      <div className="flex items-center justify-center gap-2 mb-2">
-        <Gamepad2 size={14} className="text-gray-400" />
-        <span className="text-sm font-medium text-gray-300">{game.name}</span>
-      </div>
-      <div className={`text-3xl font-black ${tier.color}`}>{tier.level}</div>
-      <span className={`inline-block mt-1 px-2.5 py-0.5 rounded text-xs font-semibold ${tier.color} ${tier.bg}`}>
-        {tier.label}
-      </span>
-      <div className="mt-2 text-xs text-gray-500">
-        0 RP • 0% WR
-      </div>
+    <div className={`bg-surface rounded-xl border ${tier.border} p-4 flex flex-col items-center gap-2`}>
+      <span className="text-xs font-semibold text-gray-400">{game.name}</span>
+      <LevelRing level={1} rp={0} color={tier.color} />
+      <span className={`text-xs font-semibold ${tier.color}`}>{tier.label}</span>
+      <div className="text-[11px] text-gray-500">0 RP • 0% WR</div>
     </div>
   );
 }
