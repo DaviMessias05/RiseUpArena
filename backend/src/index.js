@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
+const { startScheduler } = require('./lib/scheduler');
 const gamesRouter = require('./routes/games');
 const tournamentsRouter = require('./routes/tournaments');
 const lobbiesRouter = require('./routes/lobbies');
@@ -108,4 +109,5 @@ app.use((err, _req, res, _next) => {
 
 app.listen(PORT, () => {
   console.log(`Rise Up backend running on port ${PORT}`);
+  startScheduler();
 });

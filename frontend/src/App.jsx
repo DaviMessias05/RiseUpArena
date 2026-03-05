@@ -3,8 +3,10 @@ import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import LoadingSpinner from './components/LoadingSpinner'
+import SessionBar from './components/SessionBar'
 import HomePage from './pages/HomePage'
 import { useAuth } from './contexts/AuthContext'
+import { useNotifications } from './contexts/NotificationsContext'
 
 // Lazy-loaded pages for bundle splitting
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'))
@@ -24,6 +26,7 @@ const AdminPage = lazy(() => import('./pages/admin/AdminPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
 const VipPage = lazy(() => import('./pages/VipPage'))
+const MatchRoomPage = lazy(() => import('./pages/MatchRoomPage'))
 
 function PageLoader() {
   return (
@@ -35,10 +38,12 @@ function PageLoader() {
 
 export default function App() {
   const { user } = useAuth()
+  const { activeSession } = useNotifications()
   return (
     <div className="min-h-screen bg-bg">
       <Navbar />
-      <main className={`pt-14 ${user ? 'md:pr-64' : ''}`}>
+      {user && <SessionBar />}
+      <main className={`pt-14 ${user ? 'md:pr-64' : ''} ${user && activeSession ? 'ml-14' : ''}`}>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -61,6 +66,14 @@ export default function App() {
             />
             <Route path="/rankings" element={<RankingsPage />} />
             <Route path="/vip" element={<VipPage />} />
+            <Route
+              path="/match-room/:tournamentId"
+              element={
+                <ProtectedRoute>
+                  <MatchRoomPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/store" element={<StorePage />} />

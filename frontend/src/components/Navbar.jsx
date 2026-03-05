@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, User, LogOut, Shield, ChevronDown, Bell, MessageCircle, Coins } from 'lucide-react';
+import { Menu, X, User, LogOut, Shield, ChevronDown, Bell, Coins, Trophy, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationsContext';
 import SocialPanel from './SocialPanel';
 import FriendsBar from './FriendsBar';
 
@@ -15,17 +16,23 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const { user, profile, isAdmin, signOut } = useAuth();
+  const { notifications, unreadCount, markAllRead, dismissNotification } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [socialOpen, setSocialOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const socialRef = useRef(null);
+  const bellRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(e) {
       if (socialRef.current && !socialRef.current.contains(e.target)) {
         setSocialOpen(false);
+      }
+      if (bellRef.current && !bellRef.current.contains(e.target)) {
+        setBellOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -36,6 +43,7 @@ export default function Navbar() {
   useEffect(() => {
     setMobileOpen(false);
     setSocialOpen(false);
+    setBellOpen(false);
   }, [location.pathname]);
 
   const handleLogout = async () => {
@@ -98,9 +106,64 @@ export default function Navbar() {
             {user ? (
               <>
                 {/* Notification Bell */}
-                <button className="relative p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-colors">
-                  <Bell size={18} />
-                </button>
+                <div ref={bellRef} className="relative">
+                  <button
+                    onClick={() => { setBellOpen(p => !p); if (!bellOpen) markAllRead(); }}
+                    className={`relative p-2 rounded-lg transition-colors ${bellOpen ? 'text-white bg-white/8' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
+                  >
+                    <Bell size={18} />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
+                    )}
+                  </button>
+
+                  {bellOpen && (
+                    <div className="absolute right-0 top-full mt-1.5 w-80 bg-[#13161d] border border-white/8 rounded-xl shadow-2xl overflow-hidden z-50">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+                        <span className="text-sm font-bold text-white">Notificações</span>
+                        {notifications.length > 0 && (
+                          <button onClick={() => { notifications.forEach(n => dismissNotification(n.id)); }} className="text-[11px] text-gray-500 hover:text-gray-300">
+                            Limpar tudo
+                          </button>
+                        )}
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-10 gap-2">
+                            <Bell size={28} className="text-gray-700" />
+                            <p className="text-gray-500 text-sm">Sem notificações</p>
+                          </div>
+                        ) : (
+                          notifications.map(n => (
+                            <div key={n.id} className="flex items-start gap-3 px-4 py-3 border-b border-white/4 hover:bg-white/3 transition-colors">
+                              <div className={`mt-0.5 flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${
+                                n.type === 'tournament_start' ? 'bg-primary/20' :
+                                n.type === 'checkin' ? 'bg-yellow-500/20' : 'bg-white/5'
+                              }`}>
+                                {n.type === 'tournament_start' ? <Trophy size={13} className="text-primary-light" /> : <Clock size={13} className="text-yellow-400" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-white leading-tight">{n.title}</p>
+                                <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{n.message}</p>
+                                {n.tournamentId && (
+                                  <button
+                                    onClick={() => { setBellOpen(false); navigate(`/tournaments/${n.tournamentId}`); }}
+                                    className="text-[11px] text-primary-light mt-1 hover:underline"
+                                  >
+                                    Ver torneio →
+                                  </button>
+                                )}
+                              </div>
+                              <button onClick={() => dismissNotification(n.id)} className="text-gray-600 hover:text-gray-400 flex-shrink-0 mt-0.5">
+                                <X size={13} />
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* User profile + social panel */}
                 <div ref={socialRef} className="relative ml-1">

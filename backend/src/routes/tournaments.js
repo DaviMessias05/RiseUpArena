@@ -4,6 +4,7 @@ const { supabase } = require('../lib/supabase');
 const { authenticate, requireAuth, requireAdmin } = require('../middleware/auth');
 const { verifyCaptcha } = require('../middleware/captcha');
 const { updateRankings } = require('../lib/elo');
+const { generateBracket } = require('../lib/bracketGenerator');
 
 // GET /api/tournaments — List tournaments with filters
 router.get('/', async (req, res) => {
@@ -238,6 +239,72 @@ router.put('/:id', authenticate, requireAuth, requireAdmin, async (req, res) => 
   } catch (err) {
     console.error('Update tournament error:', err);
     res.status(500).json({ error: 'Failed to update tournament.' });
+  }
+});
+
+// POST /api/tournaments/:id/start — Generate bracket and start tournament (admin only)
+router.post('/:id/start', authenticate, requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: tournament } = await supabase.from('tournaments').select('*').eq('id', id).single();
+    if (!tournament) return res.status(404).json({ error: 'Torneio não encontrado.' });
+    if (tournament.status === 'in_progress' || tournament.status === 'finished')
+      return res.status(400).json({ error: 'Torneio já iniciado.' });
+
+    // Admin manual start: use all registered participants
+    const { data: participants } = await supabase
+      .from('tournament_participants').select('user_id').eq('tournament_id', id);
+    if (!participants || participants.length < 2)
+      return res.status(400).json({ error: 'Mínimo de 2 participantes necessário.' });
+
+    const userIds = participants.map(p => p.user_id);
+    const result = await generateBracket(id, userIds);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('Start tournament error:', err);
+    res.status(500).json({ error: err.message || 'Erro ao iniciar torneio.' });
+  }
+});
+
+// PATCH /api/tournaments/:id/bracket/:matchId/result — Record bracket match result (admin only)
+router.patch('/:id/bracket/:matchId/result', authenticate, requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { id, matchId } = req.params;
+    const { winner_id, score_player1 = 0, score_player2 = 0 } = req.body;
+    if (!winner_id) return res.status(400).json({ error: 'winner_id obrigatório.' });
+
+    const { data: match } = await supabase
+      .from('tournament_matches').select('*').eq('id', matchId).eq('tournament_id', id).single();
+    if (!match) return res.status(404).json({ error: 'Partida não encontrada.' });
+    if (match.status === 'finished') return res.status(400).json({ error: 'Partida já finalizada.' });
+    if (winner_id !== match.player1_id && winner_id !== match.player2_id)
+      return res.status(400).json({ error: 'Vencedor inválido.' });
+
+    await supabase.from('tournament_matches').update({
+      winner_id, score_player1, score_player2, status: 'finished',
+    }).eq('id', matchId);
+
+    if (match.next_match_id) {
+      const { data: next } = await supabase
+        .from('tournament_matches').select('player1_id, player2_id').eq('id', match.next_match_id).single();
+      if (next) {
+        const field = next.player1_id ? 'player2_id' : 'player1_id';
+        const bothNowFilled = !!next.player1_id || !!next.player2_id; // one slot was already filled
+        await supabase.from('tournament_matches').update({
+          [field]: winner_id,
+          status: bothNowFilled ? 'in_progress' : 'pending',
+        }).eq('id', match.next_match_id);
+      }
+    } else {
+      // Grand final concluded
+      await supabase.from('tournaments').update({ status: 'finished' }).eq('id', id);
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Bracket result error:', err);
+    res.status(500).json({ error: 'Erro ao registrar resultado.' });
   }
 });
 

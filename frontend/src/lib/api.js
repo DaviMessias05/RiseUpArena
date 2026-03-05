@@ -85,6 +85,16 @@ export async function apiDelete(path) {
   return handleResponse(response)
 }
 
+export async function apiPatch(path, body) {
+  const headers = await getAuthHeaders()
+  const response = await fetchWithRetry(`${API_URL}${path}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(body),
+  })
+  return handleResponse(response)
+}
+
 // ── Games ──────────────────────────────────────────────────────────────────────
 
 export function getGames() {
@@ -127,6 +137,14 @@ export function updateTournament(id, data) {
 
 export function deleteTournament(id) {
   return apiDelete(`/tournaments/${encodeURIComponent(id)}`)
+}
+
+export function startTournament(id) {
+  return apiPost(`/tournaments/${encodeURIComponent(id)}/start`, {})
+}
+
+export function recordBracketResult(tournamentId, matchId, data) {
+  return apiPatch(`/tournaments/${encodeURIComponent(tournamentId)}/bracket/${encodeURIComponent(matchId)}/result`, data)
 }
 
 // ── Lobbies ────────────────────────────────────────────────────────────────────
