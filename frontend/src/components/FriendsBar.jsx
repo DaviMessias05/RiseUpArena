@@ -22,7 +22,7 @@ function Avatar({ user, size = 8, crown = false }) {
   return (
     <div className={`relative w-${size} h-${size} rounded-full bg-[#e8611a] overflow-hidden flex items-center justify-center flex-shrink-0`}>
       {user?.avatar_url
-        ? <img src={user.avatar_url} className="w-full h-full object-cover" alt="" />
+        ? <img src={user.avatar_url} className="w-full h-full object-cover" alt={`Avatar de ${name}`} />
         : <span className={`font-bold text-white ${size <= 7 ? 'text-[10px]' : 'text-xs'}`}>{name[0].toUpperCase()}</span>
       }
       {crown && (

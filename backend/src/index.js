@@ -16,6 +16,7 @@ const adminRouter = require('./routes/admin');
 const authRouter = require('./routes/auth');
 const vipRouter = require('./routes/vip');
 const stripeRouter = require('./routes/stripe');
+const uploadRouter = require('./routes/upload');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -86,6 +87,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/vip', vipRouter);
 app.use('/api/stripe', stripeRouter);
+app.use('/api/upload', uploadRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

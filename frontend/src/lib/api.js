@@ -288,3 +288,23 @@ export function getVipPlans() {
 export function getVipStatus() {
   return apiGet('/vip/status')
 }
+
+// ── Upload ────────────────────────────────────────────────────────────────────
+
+export async function uploadAvatar(file) {
+  const formData = new FormData()
+  formData.append('avatar', file)
+
+  const headers = {}
+  if (_cachedSession?.access_token) {
+    headers['Authorization'] = `Bearer ${_cachedSession.access_token}`
+  }
+
+  const response = await fetch(`${API_URL}/upload/avatar`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  })
+
+  return handleResponse(response)
+}

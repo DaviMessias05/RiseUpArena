@@ -61,7 +61,7 @@ function ChatPanel({ lobbyId }) {
           );
         }
       } catch (err) {
-        console.error('Erro ao carregar mensagens:', err);
+        if (import.meta.env.DEV) console.error('Erro ao carregar mensagens:', err);
       }
     }
 
@@ -95,7 +95,7 @@ function ChatPanel({ lobbyId }) {
       if (error) throw error;
       setNewMessage('');
     } catch (err) {
-      console.error('Erro ao enviar mensagem:', err);
+      if (import.meta.env.DEV) console.error('Erro ao enviar mensagem:', err);
     } finally {
       setSendingMessage(false);
     }

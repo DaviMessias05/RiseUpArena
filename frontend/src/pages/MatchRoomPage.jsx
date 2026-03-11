@@ -222,7 +222,7 @@ export default function MatchRoomPage() {
                   }`}>
                     <div className="w-12 h-12 rounded-full bg-[#e8611a] overflow-hidden flex items-center justify-center">
                       {match[match.player1_id === user?.id ? 'player1' : 'player2']?.avatar_url ? (
-                        <img src={match[match.player1_id === user?.id ? 'player1' : 'player2'].avatar_url} className="w-full h-full object-cover" alt="" />
+                        <img src={match[match.player1_id === user?.id ? 'player1' : 'player2'].avatar_url} className="w-full h-full object-cover" alt={`Avatar de ${match[match.player1_id === user?.id ? 'player1' : 'player2']?.display_name || 'jogador'}`} />
                       ) : (
                         <span className="text-sm font-bold text-white">{(match[match.player1_id === user?.id ? 'player1' : 'player2']?.display_name || match[match.player1_id === user?.id ? 'player1' : 'player2']?.username || 'V')[0].toUpperCase()}</span>
                       )}
@@ -248,7 +248,7 @@ export default function MatchRoomPage() {
                       <>
                         <div className="w-12 h-12 rounded-full bg-surface-light overflow-hidden flex items-center justify-center">
                           {opponent.avatar_url ? (
-                            <img src={opponent.avatar_url} className="w-full h-full object-cover" alt="" />
+                            <img src={opponent.avatar_url} className="w-full h-full object-cover" alt={`Avatar de ${opponent.display_name || opponent.username || 'oponente'}`} />
                           ) : (
                             <span className="text-sm font-bold text-gray-400">{(opponent.display_name || opponent.username || '?')[0].toUpperCase()}</span>
                           )}
@@ -319,7 +319,7 @@ export default function MatchRoomPage() {
                   <div key={msg.id} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
                     <div className="w-6 h-6 rounded-full bg-surface-light flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
                       {msg.profiles?.avatar_url
-                        ? <img src={msg.profiles.avatar_url} className="w-full h-full object-cover" alt="" />
+                        ? <img src={msg.profiles.avatar_url} className="w-full h-full object-cover" alt={`Avatar de ${name}`} />
                         : <span className="text-[8px] font-bold text-gray-400">{name[0].toUpperCase()}</span>}
                     </div>
                     <div className={`flex flex-col gap-0.5 max-w-[80%] ${isMe ? 'items-end' : 'items-start'}`}>

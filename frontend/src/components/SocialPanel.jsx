@@ -12,7 +12,7 @@ export default function SocialPanel({ profile, displayName, userRC = 0, userAC =
       >
         <div className="w-10 h-10 rounded-full bg-[#e8611a] overflow-hidden flex items-center justify-center flex-shrink-0">
           {avatarUrl ? (
-            <img src={avatarUrl} className="w-full h-full object-cover" alt="" />
+            <img src={avatarUrl} className="w-full h-full object-cover" alt={`Avatar de ${displayName}`} />
           ) : (
             <span className="text-sm font-bold text-white">{displayName[0]?.toUpperCase()}</span>
           )}

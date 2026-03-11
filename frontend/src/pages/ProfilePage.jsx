@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   User,
@@ -12,10 +12,14 @@ import {
   Clock,
   AlertCircle,
   Camera,
+  Upload,
+  ImagePlus,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { VipBadge } from './VipPage';
 import { supabase } from '../lib/supabase';
+import { uploadAvatar } from '../lib/api';
 
 function getLevelInfo(rp) {
   if (rp >= 3000) return { level: 10, label: 'Nível 10', color: 'text-red-400' };
@@ -28,6 +32,168 @@ function getLevelInfo(rp) {
   if (rp >= 301)  return { level: 3, label: 'Nível 3', color: 'text-emerald-400' };
   if (rp >= 101)  return { level: 2, label: 'Nível 2', color: 'text-gray-300' };
   return { level: 1, label: 'Nível 1', color: 'text-gray-400' };
+}
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+function AvatarUpload({ currentUrl, onUploaded, userId }) {
+  const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState(currentUrl || null);
+  const [uploadError, setUploadError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setPreview(currentUrl || null);
+  }, [currentUrl]);
+
+  const validateFile = useCallback((file) => {
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      return 'Formato inválido. Use JPG, PNG, WebP ou GIF.';
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return 'Imagem muito grande. Máximo 2MB.';
+    }
+    return null;
+  }, []);
+
+  const uploadFile = useCallback(async (file) => {
+    const error = validateFile(file);
+    if (error) {
+      setUploadError(error);
+      return;
+    }
+
+    setUploadError(null);
+    setUploading(true);
+
+    // Show local preview immediately
+    const localPreview = URL.createObjectURL(file);
+    setPreview(localPreview);
+
+    try {
+      const { url } = await uploadAvatar(file);
+
+      setPreview(url);
+      onUploaded(url);
+    } catch (err) {
+      setUploadError(err.message || 'Erro ao enviar imagem.');
+      setPreview(currentUrl || null);
+    } finally {
+      setUploading(false);
+      URL.revokeObjectURL(localPreview);
+    }
+  }, [userId, currentUrl, onUploaded, validateFile]);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) uploadFile(file);
+  }, [uploadFile]);
+
+  const handleFileSelect = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
+    // Reset input so the same file can be selected again
+    e.target.value = '';
+  }, [uploadFile]);
+
+  const handleRemove = useCallback(() => {
+    setPreview(null);
+    setUploadError(null);
+    onUploaded('');
+  }, [onUploaded]);
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-300 mb-1.5">
+        Foto de Perfil
+      </label>
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={() => !uploading && fileInputRef.current?.click()}
+        className={`relative flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+          dragging
+            ? 'border-primary bg-primary/10'
+            : 'border-surface-lighter hover:border-primary/50 hover:bg-surface-light/50'
+        } ${uploading ? 'pointer-events-none opacity-60' : ''}`}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
+        {uploading ? (
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 size={32} className="text-primary-light animate-spin" />
+            <span className="text-sm text-gray-400">Enviando...</span>
+          </div>
+        ) : preview ? (
+          <div className="flex items-center gap-4">
+            <img
+              src={preview}
+              alt="Preview"
+              className="w-20 h-20 rounded-xl object-cover border-2 border-surface-lighter"
+            />
+            <div className="flex flex-col gap-2">
+              <span className="text-sm text-gray-300">Arraste outra imagem ou clique para trocar</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemove();
+                }}
+                className="flex items-center gap-1.5 text-xs text-danger hover:text-red-400 transition-colors self-start"
+              >
+                <Trash2 size={14} />
+                Remover foto
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="w-14 h-14 rounded-full bg-surface-light flex items-center justify-center">
+              <ImagePlus size={24} className="text-gray-400" />
+            </div>
+            <div className="text-center">
+              <span className="text-sm text-gray-300">
+                Arraste uma imagem aqui ou <span className="text-primary-light font-medium">clique para selecionar</span>
+              </span>
+              <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP ou GIF - Máx. 2MB</p>
+            </div>
+          </>
+        )}
+      </div>
+
+      {uploadError && (
+        <div className="flex items-center gap-2 text-sm text-danger">
+          <AlertCircle size={14} />
+          {uploadError}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function StatCard({ icon: Icon, label, value, color }) {
@@ -332,18 +498,11 @@ export default function ProfilePage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                URL do Avatar
-              </label>
-              <input
-                type="url"
-                value={editForm.avatar_url}
-                onChange={(e) => setEditForm({ ...editForm, avatar_url: e.target.value })}
-                className="w-full px-4 py-3 bg-surface-light border border-surface-lighter rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="https://exemplo.com/avatar.png"
-              />
-            </div>
+            <AvatarUpload
+              currentUrl={editForm.avatar_url}
+              userId={user.id}
+              onUploaded={(url) => setEditForm({ ...editForm, avatar_url: url })}
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">Bio</label>

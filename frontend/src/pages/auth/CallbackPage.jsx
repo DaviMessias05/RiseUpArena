@@ -17,7 +17,7 @@ export default function CallbackPage() {
         const { data, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
-          console.error('Callback session error:', sessionError.message);
+          if (import.meta.env.DEV) console.error('Callback session error:', sessionError.message);
           setError('Erro ao autenticar. Tente novamente.');
           setTimeout(() => navigate('/auth/login', { replace: true }), 3000);
           return;
@@ -30,7 +30,7 @@ export default function CallbackPage() {
 
         // Se não tem sessão ainda, aguarda o onAuthStateChange resolver
       } catch (err) {
-        console.error('Callback error:', err);
+        if (import.meta.env.DEV) console.error('Callback error:', err);
         setError('Erro inesperado. Redirecionando...');
         setTimeout(() => navigate('/auth/login', { replace: true }), 3000);
       }

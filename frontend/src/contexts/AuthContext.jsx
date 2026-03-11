@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
       .single()
 
     if (error) {
-      console.error('Error fetching profile:', error.message)
+      if (import.meta.env.DEV) console.error('Error fetching profile:', error.message)
       setProfile(null)
       setCachedAuth(null, null)
       return null
@@ -63,7 +63,7 @@ export function AuthProvider({ children }) {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession()
 
         if (error) {
-          console.error('Error getting session:', error.message)
+          if (import.meta.env.DEV) console.error('Error getting session:', error.message)
           if (mounted) {
             setUser(null)
             setProfile(null)
@@ -88,7 +88,7 @@ export function AuthProvider({ children }) {
           setCachedAuth(null, null)
         }
       } catch (err) {
-        console.error('Unexpected error during auth initialization:', err)
+        if (import.meta.env.DEV) console.error('Unexpected error during auth initialization:', err)
       } finally {
         if (mounted) {
           setLoading(false)

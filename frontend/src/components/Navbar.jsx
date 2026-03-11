@@ -175,7 +175,7 @@ export default function Navbar() {
                   >
                     <div className="w-8 h-8 rounded-full bg-[#e8611a] overflow-hidden flex items-center justify-center flex-shrink-0">
                       {avatarUrl ? (
-                        <img src={avatarUrl} className="w-full h-full object-cover" alt="" />
+                        <img src={avatarUrl} className="w-full h-full object-cover" alt={`Avatar de ${displayName}`} />
                       ) : (
                         <span className="text-xs font-bold text-white">{displayName[0]?.toUpperCase()}</span>
                       )}
@@ -290,7 +290,7 @@ export default function Navbar() {
                 <div className="flex items-center gap-3 px-3 py-2.5">
                   <div className="w-8 h-8 rounded-full bg-[#e8611a] overflow-hidden flex items-center justify-center">
                     {avatarUrl ? (
-                      <img src={avatarUrl} className="w-full h-full object-cover" alt="" />
+                      <img src={avatarUrl} className="w-full h-full object-cover" alt={`Avatar de ${displayName}`} />
                     ) : (
                       <span className="text-xs font-bold text-white">{displayName[0]?.toUpperCase()}</span>
                     )}

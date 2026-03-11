@@ -22,11 +22,15 @@ async function verifyCaptcha(req, res, next) {
       response: captchaToken,
     });
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     const data = await response.json();
 

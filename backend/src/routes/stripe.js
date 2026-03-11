@@ -112,9 +112,13 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
   try {
     if (webhookSecret) {
       event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-    } else {
-      // Development: parse without signature verification
+    } else if (process.env.NODE_ENV === 'development') {
+      // Development only: parse without signature verification
+      console.warn('STRIPE_WEBHOOK_SECRET not set — skipping signature verification (dev mode).');
       event = JSON.parse(req.body);
+    } else {
+      console.error('STRIPE_WEBHOOK_SECRET is not configured in production.');
+      return res.status(500).json({ error: 'Webhook configuration error.' });
     }
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);

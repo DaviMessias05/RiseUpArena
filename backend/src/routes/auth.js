@@ -85,7 +85,12 @@ router.post('/validate-cpf', async (req, res) => {
     // Serviços sugeridos: BrasilAPI (grátis), InvertexTo, CPFConsulta
     if (process.env.CPF_API_TOKEN) {
       try {
-        const response = await fetch(`https://brasilapi.com.br/api/cpf/v1/${digits}`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const response = await fetch(`https://brasilapi.com.br/api/cpf/v1/${digits}`, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
         if (!response.ok) {
           return res.status(400).json({
             valid: false,
@@ -213,7 +218,12 @@ router.post('/complete-profile', authenticate, requireAuth, async (req, res) => 
     // Verificação real de CPF via API externa (se configurado)
     if (process.env.CPF_API_TOKEN) {
       try {
-        const response = await fetch(`https://brasilapi.com.br/api/cpf/v1/${digits}`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const response = await fetch(`https://brasilapi.com.br/api/cpf/v1/${digits}`, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
         if (!response.ok) {
           return res.status(400).json({ error: 'CPF não encontrado na Receita Federal.' });
         }

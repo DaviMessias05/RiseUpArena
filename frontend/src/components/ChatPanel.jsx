@@ -54,7 +54,7 @@ export default function ChatPanel({ channelType, channelId }) {
           );
         }
       } catch (err) {
-        console.error('Erro ao carregar mensagens:', err);
+        if (import.meta.env.DEV) console.error('Erro ao carregar mensagens:', err);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -99,7 +99,7 @@ export default function ChatPanel({ channelType, channelId }) {
       if (error) throw error;
       setInput('');
     } catch (err) {
-      console.error('Erro ao enviar mensagem:', err);
+      if (import.meta.env.DEV) console.error('Erro ao enviar mensagem:', err);
     } finally {
       setSending(false);
     }

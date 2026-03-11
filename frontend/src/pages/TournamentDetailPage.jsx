@@ -633,7 +633,7 @@ export default function TournamentDetailPage() {
                                       winner === match.player1_id ? 'bg-success/10' : 'bg-surface-light/20'
                                     }`}>
                                       <div className="w-5 h-5 rounded-full bg-surface-light flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                        {p1?.avatar_url ? <img src={p1.avatar_url} className="w-full h-full object-cover" alt="" />
+                                        {p1?.avatar_url ? <img src={p1.avatar_url} className="w-full h-full object-cover" alt={`Avatar de ${p1?.display_name || p1?.username || 'jogador'}`} />
                                           : <span className="text-[8px] text-gray-400">{(p1?.display_name || p1?.username || '?')[0].toUpperCase()}</span>}
                                       </div>
                                       <span className={`text-xs flex-1 truncate font-medium ${
@@ -654,7 +654,7 @@ export default function TournamentDetailPage() {
                                       winner === match.player2_id ? 'bg-success/10' : 'bg-surface-light/20'
                                     }`}>
                                       <div className="w-5 h-5 rounded-full bg-surface-light flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                        {p2?.avatar_url ? <img src={p2.avatar_url} className="w-full h-full object-cover" alt="" />
+                                        {p2?.avatar_url ? <img src={p2.avatar_url} className="w-full h-full object-cover" alt={`Avatar de ${p2?.display_name || p2?.username || 'jogador'}`} />
                                           : <span className="text-[8px] text-gray-400">{(p2?.display_name || p2?.username || '?')[0].toUpperCase()}</span>}
                                       </div>
                                       <span className={`text-xs flex-1 truncate font-medium ${
@@ -704,7 +704,7 @@ export default function TournamentDetailPage() {
                           <Crown size={28} className="text-yellow-400 mb-2" />
                           <div className="w-12 h-12 rounded-full bg-[#e8611a] overflow-hidden flex items-center justify-center mb-2">
                             {champ.avatar_url
-                              ? <img src={champ.avatar_url} className="w-full h-full object-cover" alt="" />
+                              ? <img src={champ.avatar_url} className="w-full h-full object-cover" alt={`Avatar de ${champ.display_name || champ.username || 'campeao'}`} />
                               : <span className="text-sm font-bold text-white">{(champ.display_name || champ.username || '?')[0].toUpperCase()}</span>}
                           </div>
                           <p className="text-sm font-bold text-yellow-400 text-center">{champ.display_name || champ.username}</p>
@@ -744,7 +744,7 @@ export default function TournamentDetailPage() {
                       <span className="text-gray-600 text-xs w-5 text-right flex-shrink-0">{idx + 1}</span>
                       <div className="w-8 h-8 rounded-full bg-surface-light flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {p.profiles?.avatar_url ? (
-                          <img src={p.profiles.avatar_url} className="w-full h-full object-cover" alt="" />
+                          <img src={p.profiles.avatar_url} className="w-full h-full object-cover" alt={`Avatar de ${p.profiles?.display_name || p.profiles?.username || 'participante'}`} />
                         ) : (
                           <Users size={14} className="text-gray-500" />
                         )}
@@ -802,7 +802,7 @@ export default function TournamentDetailPage() {
                       <div key={msg.id} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
                         <div className="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
                           {msg.profiles?.avatar_url ? (
-                            <img src={msg.profiles.avatar_url} className="w-full h-full object-cover" alt="" />
+                            <img src={msg.profiles.avatar_url} className="w-full h-full object-cover" alt={`Avatar de ${name}`} />
                           ) : (
                             <Users size={12} className="text-gray-500" />
                           )}

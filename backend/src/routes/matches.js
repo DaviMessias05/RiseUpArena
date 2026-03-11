@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
     let results = data;
     if (user_id) {
       results = data.filter((match) =>
-        match.match_players.some((mp) => mp.user_id === user_id)
+        match.match_players?.some((mp) => mp.user_id === user_id)
       );
     }
 

@@ -61,7 +61,7 @@ export function RealtimeProvider({ children }) {
       )
       .subscribe((status, err) => {
         if (err) {
-          console.error(`Realtime subscription error for ${channelName}:`, err)
+          if (import.meta.env.DEV) console.error(`Realtime subscription error for ${channelName}:`, err)
         }
       })
 
@@ -100,7 +100,7 @@ export function RealtimeProvider({ children }) {
       )
       .subscribe((status, err) => {
         if (err) {
-          console.error(`Realtime subscription error for ${channelName}:`, err)
+          if (import.meta.env.DEV) console.error(`Realtime subscription error for ${channelName}:`, err)
         }
       })
 
@@ -138,7 +138,7 @@ export function RealtimeProvider({ children }) {
       )
       .subscribe((status, err) => {
         if (err) {
-          console.error(`Realtime subscription error for ${channelName}:`, err)
+          if (import.meta.env.DEV) console.error(`Realtime subscription error for ${channelName}:`, err)
         }
       })
 

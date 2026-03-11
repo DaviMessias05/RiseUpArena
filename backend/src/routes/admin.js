@@ -23,7 +23,10 @@ router.get('/users', async (req, res) => {
       .range(from, to);
 
     if (search) {
-      const sanitized = search.replace(/[,.()]/g, '');
+      const sanitized = search
+        .replace(/[,.()]/g, '')
+        .replace(/%/g, '\\%')
+        .replace(/_/g, '\\_');
       query = query.or(`username.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
     }
 
