@@ -1,21 +1,27 @@
-import { supabase } from './supabase'
+import { supabase, sessionReady } from './supabase'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 // Cache the session reference to avoid calling getSession() on every single API request.
-// onAuthStateChange keeps this up-to-date automatically.
+// sessionReady initializes it, onAuthStateChange keeps it up-to-date.
 let _cachedSession = null
+
+sessionReady.then(async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  _cachedSession = session
+})
 
 supabase.auth.onAuthStateChange((_event, session) => {
   _cachedSession = session
 })
 
-// Initialize on load
-supabase.auth.getSession().then(({ data: { session } }) => {
-  _cachedSession = session
-})
-
-function getAuthHeaders() {
+async function getAuthHeaders() {
+  await sessionReady
+  // If _cachedSession is still null after sessionReady, try one more time
+  if (!_cachedSession) {
+    const { data: { session } } = await supabase.auth.getSession()
+    _cachedSession = session
+  }
   const headers = {
     'Content-Type': 'application/json',
   }
@@ -60,7 +66,7 @@ async function fetchWithRetry(url, options, retries = 1) {
 }
 
 export async function apiGet(path) {
-  const headers = getAuthHeaders()
+  const headers = await getAuthHeaders()
   const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'GET',
     headers,
@@ -69,7 +75,7 @@ export async function apiGet(path) {
 }
 
 export async function apiPost(path, body) {
-  const headers = getAuthHeaders()
+  const headers = await getAuthHeaders()
   const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'POST',
     headers,
@@ -79,7 +85,7 @@ export async function apiPost(path, body) {
 }
 
 export async function apiPut(path, body) {
-  const headers = getAuthHeaders()
+  const headers = await getAuthHeaders()
   const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'PUT',
     headers,
@@ -89,7 +95,7 @@ export async function apiPut(path, body) {
 }
 
 export async function apiDelete(path) {
-  const headers = getAuthHeaders()
+  const headers = await getAuthHeaders()
   const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'DELETE',
     headers,
@@ -98,7 +104,7 @@ export async function apiDelete(path) {
 }
 
 export async function apiPatch(path, body) {
-  const headers = getAuthHeaders()
+  const headers = await getAuthHeaders()
   const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'PATCH',
     headers,
@@ -292,6 +298,7 @@ export function getVipStatus() {
 // ── Upload ────────────────────────────────────────────────────────────────────
 
 export async function uploadAvatar(file) {
+  await sessionReady
   const formData = new FormData()
   formData.append('avatar', file)
 
@@ -300,11 +307,23 @@ export async function uploadAvatar(file) {
     headers['Authorization'] = `Bearer ${_cachedSession.access_token}`
   }
 
-  const response = await fetch(`${API_URL}/upload/avatar`, {
-    method: 'POST',
-    headers,
-    body: formData,
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30000)
 
-  return handleResponse(response)
+  try {
+    const response = await fetch(`${API_URL}/upload/avatar`, {
+      method: 'POST',
+      headers,
+      body: formData,
+      signal: controller.signal,
+    })
+    clearTimeout(timeout)
+    return handleResponse(response)
+  } catch (err) {
+    clearTimeout(timeout)
+    if (err.name === 'AbortError') {
+      throw new Error('Upload demorou demais. Tente uma imagem menor.')
+    }
+    throw new Error('Erro ao enviar imagem. Verifique sua conexão.')
+  }
 }

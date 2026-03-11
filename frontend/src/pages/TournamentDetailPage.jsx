@@ -6,7 +6,7 @@ import {
   CheckCircle2, MessageCircle, Send, Globe, Play, Crown,
   ChevronRight, AlertTriangle,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, sessionReady } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationsContext';
 import { startTournament, recordBracketResult } from '../lib/api';
@@ -90,6 +90,7 @@ export default function TournamentDetailPage() {
   useEffect(() => {
     async function load() {
       setLoading(true);
+      await sessionReady;
       try {
         // Run all independent queries in parallel
         const queries = [

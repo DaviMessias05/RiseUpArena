@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { VipBadge } from './VipPage';
-import { supabase } from '../lib/supabase';
+import { supabase, sessionReady } from '../lib/supabase';
 import { uploadAvatar } from '../lib/api';
 
 function getLevelInfo(rp) {
@@ -282,7 +282,6 @@ export default function ProfilePage() {
 
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    display_name: '',
     bio: '',
     avatar_url: '',
   });
@@ -302,6 +301,7 @@ export default function ProfilePage() {
     async function fetchData() {
       setLoading(true);
       setError(null);
+      await sessionReady;
 
       try {
         // Fetch profile, rankings (stats) and match history in parallel via Supabase directly
@@ -333,7 +333,6 @@ export default function ProfilePage() {
           const p = profileResult.value.data;
           setProfileData(p);
           setEditForm({
-            display_name: p?.display_name || '',
             bio: p?.bio || '',
             avatar_url: p?.avatar_url || '',
           });
@@ -379,7 +378,6 @@ export default function ProfilePage() {
 
     try {
       const updated = await updateProfile({
-        display_name: editForm.display_name || null,
         bio: editForm.bio || null,
         avatar_url: editForm.avatar_url || null,
       });
@@ -449,11 +447,13 @@ export default function ProfilePage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-2xl font-bold text-white">
-                  {profileData.display_name || profileData.username}
+                  {profileData.username}
                 </h1>
                 {profileData.vip_tier && <VipBadge tier={profileData.vip_tier} size="sm" />}
               </div>
-              <p className="text-gray-400">@{profileData.username}</p>
+              {profileData.full_name && (
+                <p className="text-gray-400">{profileData.full_name}</p>
+              )}
               {profileData.bio && (
                 <p className="text-sm text-gray-300 mt-1">{profileData.bio}</p>
               )}
@@ -484,20 +484,6 @@ export default function ProfilePage() {
           )}
 
           <form onSubmit={handleSaveProfile} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Nome de exibição
-              </label>
-              <input
-                type="text"
-                value={editForm.display_name}
-                onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
-                className="w-full px-4 py-3 bg-surface-light border border-surface-lighter rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Seu nome de exibição"
-                maxLength={30}
-              />
-            </div>
-
             <AvatarUpload
               currentUrl={editForm.avatar_url}
               userId={user.id}
@@ -535,7 +521,6 @@ export default function ProfilePage() {
                   setEditing(false);
                   setSaveError(null);
                   setEditForm({
-                    display_name: profileData.display_name || '',
                     bio: profileData.bio || '',
                     avatar_url: profileData.avatar_url || '',
                   });

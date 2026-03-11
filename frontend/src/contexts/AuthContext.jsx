@@ -4,141 +4,75 @@ import { clearAllCache } from '../lib/cache'
 
 const AuthContext = createContext(null)
 
-const CACHE_KEY = 'rua_auth_cache'
-
-function getCachedAuth() {
-  try {
-    const cached = localStorage.getItem(CACHE_KEY)
-    if (!cached) return null
-    return JSON.parse(cached)
-  } catch {
-    return null
-  }
-}
-
-function setCachedAuth(user, profile) {
-  try {
-    if (user && profile) {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ user, profile }))
-    } else {
-      localStorage.removeItem(CACHE_KEY)
-    }
-  } catch {
-    // Ignora erros de storage
-  }
-}
-
 export function AuthProvider({ children }) {
-  const cached = getCachedAuth()
-
-  const [user, setUser] = useState(cached?.user ?? null)
-  const [profile, setProfile] = useState(cached?.profile ?? null)
+  const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [session, setSession] = useState(null)
-  // Se tem cache, não mostra loading
-  const [loading, setLoading] = useState(!cached)
+  const [loading, setLoading] = useState(true)
 
   const fetchProfile = useCallback(async (userId) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
 
-    if (error) {
-      if (import.meta.env.DEV) console.error('Error fetching profile:', error.message)
-      setProfile(null)
-      setCachedAuth(null, null)
+      if (error) {
+        if (import.meta.env.DEV) console.error('Error fetching profile:', error.message)
+        return null
+      }
+      return data
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('fetchProfile exception:', err)
       return null
     }
-
-    setProfile(data)
-    return data
   }, [])
 
   useEffect(() => {
     let mounted = true
 
-    async function initializeAuth() {
-      try {
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession()
-
-        if (error) {
-          if (import.meta.env.DEV) console.error('Error getting session:', error.message)
-          if (mounted) {
-            setUser(null)
-            setProfile(null)
-            setCachedAuth(null, null)
-          }
-          return
-        }
-
-        if (!mounted) return
-
-        setSession(currentSession)
-        const currentUser = currentSession?.user ?? null
-        setUser(currentUser)
-
-        if (currentUser) {
-          const profileData = await fetchProfile(currentUser.id)
-          if (mounted) {
-            setCachedAuth(currentUser, profileData)
-          }
-        } else {
-          setProfile(null)
-          setCachedAuth(null, null)
-        }
-      } catch (err) {
-        if (import.meta.env.DEV) console.error('Unexpected error during auth initialization:', err)
-      } finally {
-        if (mounted) {
-          setLoading(false)
-        }
+    // Safety timeout: if auth never initializes, stop loading
+    const timeout = setTimeout(() => {
+      if (mounted) {
+        if (import.meta.env.DEV) console.warn('Auth init timeout — forcing load complete')
+        setLoading(false)
       }
-    }
-
-    initializeAuth()
+    }, 5000)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!mounted) return
-        // INITIAL_SESSION is handled by initializeAuth() above — skip to avoid double fetchProfile
-        if (event === 'INITIAL_SESSION') return
 
-        // Token refresh failed — session expired silently
-        if (event === 'TOKEN_REFRESHED' && !newSession) {
+        // SIGNED_OUT: clear everything
+        if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !newSession)) {
           setUser(null)
           setProfile(null)
           setSession(null)
-          setCachedAuth(null, null)
           clearAllCache()
+          setLoading(false)
           return
         }
 
-        if (event === 'SIGNED_OUT') {
-          setUser(null)
-          setProfile(null)
-          setSession(null)
-          setCachedAuth(null, null)
-          clearAllCache()
-          return
-        }
-
+        // INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED: update state
         setSession(newSession)
         const newUser = newSession?.user ?? null
         setUser(newUser)
 
         if (newUser) {
           const profileData = await fetchProfile(newUser.id)
-          if (mounted) setCachedAuth(newUser, profileData)
+          if (mounted) setProfile(profileData)
         } else {
           setProfile(null)
-          setCachedAuth(null, null)
         }
+
+        if (mounted) setLoading(false)
       }
     )
 
     return () => {
       mounted = false
+      clearTimeout(timeout)
       subscription.unsubscribe()
     }
   }, [fetchProfile])
@@ -148,24 +82,15 @@ export function AuthProvider({ children }) {
       email,
       password,
       options: {
-        data: {
-          username,
-          full_name: fullName,
-          cpf,
-        },
+        data: { username, full_name: fullName, cpf },
       },
     })
-
     if (error) throw error
     return data
   }, [])
 
   const signIn = useCallback(async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     return data
   }, [])
@@ -173,11 +98,8 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = useCallback(async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/auth/callback',
-      },
+      options: { redirectTo: window.location.origin + '/auth/callback' },
     })
-
     if (error) throw error
     return data
   }, [])
@@ -186,13 +108,12 @@ export function AuthProvider({ children }) {
     setUser(null)
     setProfile(null)
     setSession(null)
-    setCachedAuth(null, null)
-    try { localStorage.clear() } catch {}
+    clearAllCache()
     try {
       await supabase.auth.signOut()
-    } catch (err) {
-      // Ignora erros - tokens já foram limpos
-    }
+    } catch {}
+    try { localStorage.clear() } catch {}
+    try { sessionStorage.clear() } catch {}
     window.location.href = '/'
   }, [])
 
@@ -204,7 +125,6 @@ export function AuthProvider({ children }) {
     for (const key of ALLOWED_FIELDS) {
       if (updates[key] !== undefined) safeUpdates[key] = updates[key]
     }
-
     if (Object.keys(safeUpdates).length === 0) {
       throw new Error('No valid fields to update')
     }
@@ -217,54 +137,27 @@ export function AuthProvider({ children }) {
       .single()
 
     if (error) throw error
-
     setProfile(data)
-    setCachedAuth(user, data)
     return data
   }, [user])
 
-  const isAdmin = useMemo(() => {
-    return profile?.role === 'admin'
-  }, [profile])
-
-  const isEmailVerified = useMemo(() => {
-    return !!user?.email_confirmed_at || profile?.email_verified === true
-  }, [user, profile])
-
+  const isAdmin = useMemo(() => profile?.role === 'admin', [profile])
+  const isEmailVerified = useMemo(() => !!user?.email_confirmed_at || profile?.email_verified === true, [user, profile])
   const isProfileComplete = useMemo(() => {
-    if (!user) return null
-    if (!profile) return null
+    if (!user || !profile) return null
     return !!profile.cpf
   }, [user, profile])
 
   const value = useMemo(() => ({
-    user,
-    profile,
-    session,
-    loading,
-    isAdmin,
-    isEmailVerified,
-    isProfileComplete,
-    signUp,
-    signIn,
-    signInWithGoogle,
-    signOut,
-    updateProfile,
-    fetchProfile,
+    user, profile, session, loading,
+    isAdmin, isEmailVerified, isProfileComplete,
+    signUp, signIn, signInWithGoogle, signOut,
+    updateProfile, fetchProfile,
   }), [
-    user,
-    profile,
-    session,
-    loading,
-    isAdmin,
-    isEmailVerified,
-    isProfileComplete,
-    signUp,
-    signIn,
-    signInWithGoogle,
-    signOut,
-    updateProfile,
-    fetchProfile,
+    user, profile, session, loading,
+    isAdmin, isEmailVerified, isProfileComplete,
+    signUp, signIn, signInWithGoogle, signOut,
+    updateProfile, fetchProfile,
   ])
 
   return (

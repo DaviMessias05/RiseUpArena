@@ -1,6 +1,7 @@
-import { supabase } from './supabase'
+import { supabase, sessionReady } from './supabase'
 
 export async function fetchGames() {
+  await sessionReady
   const { data, error } = await supabase
     .from('games')
     .select('*')
@@ -12,6 +13,7 @@ export async function fetchGames() {
 }
 
 export async function fetchGame(slug) {
+  await sessionReady
   const { data, error } = await supabase
     .from('games')
     .select('*')
@@ -23,6 +25,7 @@ export async function fetchGame(slug) {
 }
 
 export async function fetchTournaments() {
+  await sessionReady
   const { data, error } = await supabase
     .from('tournaments')
     .select('*, games(name, slug, max_team_size)')
@@ -42,6 +45,7 @@ export async function fetchTournaments() {
 }
 
 export async function fetchLobbies() {
+  await sessionReady
   const { data, error } = await supabase
     .from('lobbies')
     .select('*, games(name, slug)')
@@ -57,6 +61,7 @@ export async function fetchLobbies() {
 }
 
 export async function fetchRankings(gameSlug) {
+  await sessionReady
   // First get game id from slug
   const { data: game, error: gErr } = await supabase
     .from('games')
@@ -83,6 +88,7 @@ export async function fetchRankings(gameSlug) {
 }
 
 export async function fetchUserRankings(userId) {
+  await sessionReady
   const { data, error } = await supabase
     .from('rankings')
     .select('*, games(name, slug, banner_url)')
@@ -99,6 +105,7 @@ export async function fetchUserRankings(userId) {
 }
 
 export async function fetchPlatformStats() {
+  await sessionReady
   const [
     { count: users },
     { count: matches },

@@ -4,7 +4,7 @@ import {
   Swords, Trophy, Clock, Users, ArrowLeft, Loader2,
   CheckCircle2, AlertCircle, Send, MessageCircle, Crown,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, sessionReady } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 function formatTime(dateStr) {
@@ -30,6 +30,7 @@ export default function MatchRoomPage() {
 
     async function load() {
       setLoading(true);
+      await sessionReady;
       try {
         // Load tournament info
         const { data: t } = await supabase

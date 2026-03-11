@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRealtime } from '../contexts/RealtimeContext';
-import { supabase } from '../lib/supabase';
+import { supabase, sessionReady } from '../lib/supabase';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -452,8 +452,10 @@ function FriendsTab({ userId, onStartChat, onInviteToSquad }) {
   const [pendingReceived, setPendingReceived] = useState([]);
   const [addInput, setAddInput] = useState('');
   const [addError, setAddError] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const searchTimeout = useRef(null);
   const [openMenuId, setOpenMenuId] = useState(null); // friend.id with open context menu
   const menuRef = useRef(null);
 
@@ -498,6 +500,34 @@ function FriendsTab({ userId, onStartChat, onInviteToSquad }) {
     return () => { ch.unsubscribe(); };
   }, [userId, loadFriends]);
 
+  function handleAddInputChange(val) {
+    setAddInput(val);
+    setAddError('');
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (val.trim().length < 2) { setSuggestions([]); return; }
+    searchTimeout.current = setTimeout(async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url')
+        .ilike('username', `${val.trim()}%`)
+        .neq('id', userId)
+        .limit(5);
+      setSuggestions(data || []);
+    }, 300);
+  }
+
+  async function sendFriendRequestTo(targetId) {
+    setAddError('');
+    const { error } = await supabase.from('friendships').insert({ requester_id: userId, addressee_id: targetId });
+    if (error) {
+      setAddError(error.code === '23505' ? 'Solicitação já enviada.' : 'Erro ao enviar.');
+      return;
+    }
+    setAddInput('');
+    setSuggestions([]);
+    setShowAdd(false);
+  }
+
   async function sendFriendRequest(e) {
     e.preventDefault();
     setAddError('');
@@ -513,13 +543,7 @@ function FriendsTab({ userId, onStartChat, onInviteToSquad }) {
     if (!target) { setAddError('Usuário não encontrado.'); return; }
     if (target.id === userId) { setAddError('Você não pode se adicionar.'); return; }
 
-    const { error } = await supabase.from('friendships').insert({ requester_id: userId, addressee_id: target.id });
-    if (error) {
-      setAddError(error.code === '23505' ? 'Solicitação já enviada.' : 'Erro ao enviar.');
-      return;
-    }
-    setAddInput('');
-    setShowAdd(false);
+    await sendFriendRequestTo(target.id);
   }
 
   async function acceptFriend(id) {
@@ -541,18 +565,30 @@ function FriendsTab({ userId, onStartChat, onInviteToSquad }) {
             <div className="flex gap-1">
               <input
                 value={addInput}
-                onChange={e => setAddInput(e.target.value)}
-                placeholder="Username"
+                onChange={e => handleAddInputChange(e.target.value)}
+                placeholder="Buscar username..."
                 className="flex-1 bg-white/5 text-[11px] text-white placeholder-gray-600 rounded px-2 py-1.5 outline-none focus:bg-white/8"
                 autoFocus
               />
-              <button type="submit" className="p-1.5 bg-[#e8611a] text-white rounded hover:opacity-90 transition-opacity">
-                <Check size={12} />
-              </button>
-              <button type="button" onClick={() => { setShowAdd(false); setAddError(''); }} className="p-1.5 text-gray-500 hover:text-white transition-colors">
+              <button type="button" onClick={() => { setShowAdd(false); setAddError(''); setSuggestions([]); setAddInput(''); }} className="p-1.5 text-gray-500 hover:text-white transition-colors">
                 <X size={12} />
               </button>
             </div>
+            {suggestions.length > 0 && (
+              <div className="mt-1 bg-[#1a1a2e] border border-white/10 rounded overflow-hidden">
+                {suggestions.map(s => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => sendFriendRequestTo(s.id)}
+                    className="flex items-center gap-2 w-full px-2 py-1.5 hover:bg-white/5 transition-colors text-left"
+                  >
+                    <Avatar user={s} size={6} />
+                    <span className="text-[11px] text-white truncate">{s.username}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {addError && <p className="text-[10px] text-red-400 mt-1">{addError}</p>}
           </form>
         ) : (

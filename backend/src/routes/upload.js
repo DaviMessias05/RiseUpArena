@@ -1,6 +1,6 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
+const sharp = require('sharp');
 const { authenticate, requireAuth } = require('../middleware/auth');
 const { uploadToR2, deleteFromR2 } = require('../lib/r2');
 const { supabase } = require('../lib/supabase');
@@ -51,10 +51,15 @@ router.post(
         .eq('id', req.user.id)
         .single();
 
-      const ext = path.extname(req.file.originalname).toLowerCase() || '.png';
-      const key = `avatars/${req.user.id}/${Date.now()}${ext}`;
+      // Resize to 512x512 and convert to WebP
+      const processed = await sharp(req.file.buffer)
+        .resize(512, 512, { fit: 'cover', position: 'center' })
+        .webp({ quality: 80 })
+        .toBuffer();
 
-      const publicUrl = await uploadToR2(key, req.file.buffer, req.file.mimetype);
+      const key = `avatars/${req.user.id}/${Date.now()}.webp`;
+
+      const publicUrl = await uploadToR2(key, processed, 'image/webp');
 
       // Update profile with new avatar URL
       const { error: dbError } = await supabase

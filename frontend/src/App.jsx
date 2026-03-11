@@ -38,8 +38,17 @@ function PageLoader() {
 }
 
 export default function App() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const { activeSession } = useNotifications()
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-bg">
       <Navbar />
