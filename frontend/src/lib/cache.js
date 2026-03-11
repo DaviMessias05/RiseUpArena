@@ -8,7 +8,12 @@ const CACHE_PREFIX = `rua_cache_${CACHE_VERSION}_`
     old.forEach(k => localStorage.removeItem(k))
   } catch {}
 })()
+
 const memoryCache = new Map()
+
+// In-flight request deduplication — prevents multiple components
+// from firing the same fetch simultaneously
+const inflightRequests = new Map()
 
 export function getCache(key) {
   // Check memory first
@@ -74,4 +79,20 @@ export function clearAllCache() {
     const keys = Object.keys(localStorage).filter(k => k.startsWith(CACHE_PREFIX))
     keys.forEach(k => localStorage.removeItem(k))
   } catch {}
+}
+
+/**
+ * Deduplicated fetch — if a request for the same key is already in-flight,
+ * returns the existing promise instead of firing a new one.
+ */
+export function deduplicatedFetch(key, fetcher) {
+  const existing = inflightRequests.get(key)
+  if (existing) return existing
+
+  const promise = fetcher().finally(() => {
+    inflightRequests.delete(key)
+  })
+
+  inflightRequests.set(key, promise)
+  return promise
 }

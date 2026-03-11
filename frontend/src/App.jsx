@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import LoadingSpinner from './components/LoadingSpinner'
+import ErrorBoundary from './components/ErrorBoundary'
 import SessionBar from './components/SessionBar'
 import HomePage from './pages/HomePage'
 import { useAuth } from './contexts/AuthContext'
@@ -44,6 +45,7 @@ export default function App() {
       <Navbar />
       {user && <SessionBar />}
       <main className={`pt-14 ${user ? 'md:pr-64' : ''} ${user && activeSession ? 'ml-14' : ''}`}>
+        <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -99,6 +101,7 @@ export default function App() {
             />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   )

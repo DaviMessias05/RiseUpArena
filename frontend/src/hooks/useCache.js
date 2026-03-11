@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { getCache, setCache, getCacheAge } from '../lib/cache'
+import { getCache, setCache, getCacheAge, deduplicatedFetch } from '../lib/cache'
 
 // Data younger than this won't trigger a background refetch
 const FRESH_WINDOW_MS = 30 * 1000
@@ -10,7 +10,13 @@ export function useCachedData(key, fetcher, ttlMs = 5 * 60 * 1000) {
   const [loading, setLoading] = useState(!cached)
   const [error, setError] = useState(null)
   const fetcherRef = useRef(fetcher)
+  const mountedRef = useRef(true)
   fetcherRef.current = fetcher
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
 
   const fetchData = useCallback(async (force = false) => {
     if (!force) {
@@ -25,16 +31,21 @@ export function useCachedData(key, fetcher, ttlMs = 5 * 60 * 1000) {
     }
 
     try {
-      const fresh = await fetcherRef.current()
+      // Deduplicate: if another component already started the same fetch, reuse it
+      const fresh = await deduplicatedFetch(key, fetcherRef.current)
+      if (!mountedRef.current) return
       setData(fresh)
       setCache(key, fresh, ttlMs)
       setError(null)
     } catch (err) {
+      if (!mountedRef.current) return
       if (!getCache(key)) {
         setError(err)
       }
     } finally {
-      setLoading(false)
+      if (mountedRef.current) {
+        setLoading(false)
+      }
     }
   }, [key, ttlMs])
 

@@ -2,13 +2,25 @@ import { supabase } from './supabase'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api'
 
-async function getAuthHeaders() {
-  const { data: { session } } = await supabase.auth.getSession()
+// Cache the session reference to avoid calling getSession() on every single API request.
+// onAuthStateChange keeps this up-to-date automatically.
+let _cachedSession = null
+
+supabase.auth.onAuthStateChange((_event, session) => {
+  _cachedSession = session
+})
+
+// Initialize on load
+supabase.auth.getSession().then(({ data: { session } }) => {
+  _cachedSession = session
+})
+
+function getAuthHeaders() {
   const headers = {
     'Content-Type': 'application/json',
   }
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`
+  if (_cachedSession?.access_token) {
+    headers['Authorization'] = `Bearer ${_cachedSession.access_token}`
   }
   return headers
 }
@@ -48,7 +60,7 @@ async function fetchWithRetry(url, options, retries = 1) {
 }
 
 export async function apiGet(path) {
-  const headers = await getAuthHeaders()
+  const headers = getAuthHeaders()
   const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'GET',
     headers,
@@ -57,7 +69,7 @@ export async function apiGet(path) {
 }
 
 export async function apiPost(path, body) {
-  const headers = await getAuthHeaders()
+  const headers = getAuthHeaders()
   const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'POST',
     headers,
@@ -67,7 +79,7 @@ export async function apiPost(path, body) {
 }
 
 export async function apiPut(path, body) {
-  const headers = await getAuthHeaders()
+  const headers = getAuthHeaders()
   const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'PUT',
     headers,
@@ -77,7 +89,7 @@ export async function apiPut(path, body) {
 }
 
 export async function apiDelete(path) {
-  const headers = await getAuthHeaders()
+  const headers = getAuthHeaders()
   const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'DELETE',
     headers,
@@ -86,7 +98,7 @@ export async function apiDelete(path) {
 }
 
 export async function apiPatch(path, body) {
-  const headers = await getAuthHeaders()
+  const headers = getAuthHeaders()
   const response = await fetchWithRetry(`${API_URL}${path}`, {
     method: 'PATCH',
     headers,

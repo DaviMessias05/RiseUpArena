@@ -104,6 +104,25 @@ export function AuthProvider({ children }) {
         // INITIAL_SESSION is handled by initializeAuth() above — skip to avoid double fetchProfile
         if (event === 'INITIAL_SESSION') return
 
+        // Token refresh failed — session expired silently
+        if (event === 'TOKEN_REFRESHED' && !newSession) {
+          setUser(null)
+          setProfile(null)
+          setSession(null)
+          setCachedAuth(null, null)
+          clearAllCache()
+          return
+        }
+
+        if (event === 'SIGNED_OUT') {
+          setUser(null)
+          setProfile(null)
+          setSession(null)
+          setCachedAuth(null, null)
+          clearAllCache()
+          return
+        }
+
         setSession(newSession)
         const newUser = newSession?.user ?? null
         setUser(newUser)
